@@ -99,6 +99,14 @@
         <div class="stage-box" id="interactiveStageBox">展示台</div>
         <div id="teachingZone" class="teaching-row">
             <div class="teaching-column">
+                <h3>🛠️ 逐步動態驗證解讀</h3>
+                <div class="block-form">
+                    <p class="camp-tip">💡 概念引導：多變數計算需遵循「隱形括號對號入座」與「先乘除、後加減」原則。</p>
+                    <div class="form-group"><label>第一步：寫出帶括號代入算式 (或直接算答案)：</label><input type="text" id="rightCampInput" placeholder="例如: (8)(11)/2"></div>
+                    <button onclick="executeFinalVerify()" class="btn-success">執行集成驗證</button>
+                </div>
+            </div>
+            <div class="teaching-column">
                 <h3>📝 步驟動態黑板</h3>
                 <div class="math-step-box" id="mathStepBox"></div>
             </div>
@@ -111,9 +119,10 @@
         <div id="printOutputRenderZone">
             <div class="print-student-page">
                 <h3 id="printStudentInfo">挑戰者歷程報告</h3>
+                <div id="timeModeResultSummary" style="margin: 15px 0; padding: 12px; background: #fffbeb; border-radius: 8px; font-weight: bold; border-left: 4px solid var(--warning); display: none; color: #0f172a;"></div>
                 <table class="stats-table">
-                    <thead><tr><th>題型結構</th><th>挑戰次數</th><th>首答對</th><th>綜合率</th></tr></thead>
-                    <tbody id="statsTableBody"><tr><td colspan="4">目前尚無挑戰數據</td></tr></tbody>
+                    <thead><tr><th>題型結構</th><th>挑戰次數</th><th>當前積分狀態</th><th>成就判定</th></tr></thead>
+                    <tbody id="statsTableBody"><tr><td>多變數公式計算</td><td>綜合結構項目</td><td id="statsFinalScore">0 分</td><td>關卡完賽</td></tr></tbody>
                 </table>
             </div>
         </div>
@@ -126,20 +135,18 @@
 
 <script>
     let currentRole = "", userRawClass = "", userRawSeat = "";
-    let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, score: 0, currentIdx: 0, questionList: [] };
-    let eqData = { targetLetter: "A", formulaName: "bh/2", variablesText: "b=8, h=11", ansStr: "44" };
+    let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, targetScore: 5, timeLimitSetting: 300, score: 0, currentIdx: 0, questionList: [] };
+    let eqData = { targetLetter: "A", formulaName: "bh/2", variablesText: "b=8, h=11", ansStr: "44", substituted: "(8)(11)/2" };
+    let timerInterval = null; let timeLeft = 0;
 
-    // 介面切換核心函數：修正按鈕點擊無反應問題
     function showPanel(id) {
         document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
         const targetPanel = document.getElementById(id);
-        if (targetPanel) {
-            targetPanel.classList.add('active');
-        }
+        if (targetPanel) targetPanel.classList.add('active');
+        document.getElementById('topLeftNav').style.display = 'block'; 
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    // 模式選擇分流處理
     function switchSetupConfig(mode) {
         session.currentMode = mode;
         if (mode === 'CHALLENGE') {
@@ -148,6 +155,7 @@
         } else if (mode === 'SOLVER') {
             showPanel('step1_solver');
         } else if (mode === 'STATS') {
+            document.getElementById('statsFinalScore').innerText = `${session.score} 分`;
             showPanel('step_stats_panel');
         } else if (mode === 'REVIEW') {
             alert("目前錯題庫尚無資料！");
@@ -156,10 +164,9 @@
 
     function renderTypeSelectOptions() {
         document.getElementById('typeSelect').innerHTML = `
-            <option value="1">1. 雙變數公式求值</option>
-            <option value="2">2. 三變數公式求值</option>
-            <option value="3">3. 多變數綜合公式求值</option>
-            <option value="MIX" selected>4. 🔀 綜合大亂鬥</option>
+            <option value="1">1. 雙變數公式求值 (代入1~2項)</option>
+            <option value="2">2. 三變數公式求值 (幾何長寬高)</option>
+            <option value="MIX" selected>3. 🔀 跨學科多變數綜合大亂鬥</option>
         `;
     }
 
@@ -170,44 +177,113 @@
         document.getElementById('timeLimitInputWrapper').style.display = c === 'TIME_LIMIT' ? 'block' : 'none';
     }
 
+    // 🎯 核心補正：限時狂熱衝分倒數計時引擎
+    function startSessionTimer(seconds) {
+        stopSessionTimer(); timeLeft = seconds;
+        document.getElementById('globalTimerBox').style.display = 'inline-block';
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            let m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            let s = (timeLeft % 60).toString().padStart(2, '0');
+            document.getElementById('globalTimerBox').innerText = `⏱️ ${m}:${s}`;
+            if (timeLeft <= 0) {
+                stopSessionTimer();
+                alert("⏱️ 時間到！多變數瘋狂衝分賽挑戰結束！");
+                finishTimeLimitSession();
+            }
+        }, 1000);
+    }
+
+    function stopSessionTimer() {
+        if(timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+        document.getElementById('globalTimerBox').style.display = 'none';
+    }
+
+    function finishTimeLimitSession() {
+        stopSessionTimer();
+        document.getElementById('timeModeResultSummary').style.display = 'block';
+        document.getElementById('timeModeResultSummary').innerHTML = `🏁 限時衝分完賽：你成功斬獲了 <span style="font-size:20px;color:var(--danger);">${session.score}</span> 分！`;
+        switchSetupConfig('STATS');
+    }
+
     function initChallengeSession() {
-        session.score = 0;
-        session.currentIdx = 0;
-        session.questionList = ["挑戰題：計算 A = bh/2 的值"];
+        session.score = 0; session.currentIdx = 0; session.questionList = ["綜合求值題"];
+        session.endCondition = document.querySelector('input[name="endCondition"]:checked').value;
+        document.getElementById('timeModeResultSummary').style.display = 'none';
+
+        if (session.endCondition === 'TIME_LIMIT') {
+            let sec = parseInt(document.getElementById('timeLimitSelect').value) || 180;
+            session.timeLimitSetting = sec;
+            startSessionTimer(sec);
+        } else {
+            stopSessionTimer();
+        }
         loadEquationToStage();
     }
 
     function handleManualSolverInput() {
-        let eq = document.getElementById('eqInput').value || "A = bh/2";
+        stopSessionTimer();
+        let eq = document.getElementById('eqInput').value || "A = bh / 2";
         let vars = document.getElementById('xValueInput').value || "b=8, h=11";
-        eqData.formulaName = eq;
+        eqData.formulaName = eq.includes('=') ? eq.split('=')[1].trim() : eq;
+        eqData.targetLetter = eq.includes('=') ? eq.split('=')[0].trim() : "Y";
         eqData.variablesText = vars;
-        session.questionList = ["自訂題"];
+        session.questionList = ["自訂引導題"];
         loadEquationToStage();
     }
 
     function loadEquationToStage() {
+        document.getElementById('ansInput').value = '';
         document.getElementById('scoreText').innerText = `積分：${session.score}`;
-        document.getElementById('displayEq').innerHTML = `<div>已知 ${eqData.targetLetter} = ${eqData.formulaName}</div><div style='margin-top:10px; color:#cbd5e1;'>當 ${eqData.variablesText}</div>`;
+        document.getElementById('progressText').innerText = session.endCondition === 'TIME_LIMIT' ? `⏳ 限時瘋狂衝分中！` : `題驗進度：第 ${session.currentIdx + 1} 題`;
+        document.getElementById('displayEq').innerHTML = `<div>已知 ${eqData.targetLetter} = ${eqData.formulaName}</div><div style='margin-top:20px; color:#cbd5e1; font-size: 22px;'>當 ${eqData.variablesText}，求 ${eqData.targetLetter} = ?</div>`;
         showPanel('step2');
     }
 
     function checkFirstAnswer() {
         let ans = document.getElementById('ansInput').value.trim();
         showPanel('step3');
-        document.getElementById('interactiveStageBox').innerText = `您的答案：${ans}`;
-        document.getElementById('mathStepBox').innerHTML = `<div>公式：${eqData.targetLetter} = ${eqData.formulaName}</div><div>帶入數據：${eqData.variablesText}</div><div>標準答案為：${eqData.ansStr}</div>`;
-        document.getElementById('nextBtn').style.display = "block";
+        document.getElementById('rightCampInput').value = '';
+        document.getElementById('interactiveStageBox').innerText = `已鎖定數值：求值公式 ${eqData.targetLetter}`;
+        document.getElementById('mathStepBox').innerHTML = `
+            <div><strong>原式：</strong> ${eqData.targetLetter} = ${eqData.formulaName}</div>
+            <div style="color:#cbd5e1; margin-top:5px;">[已知條件]: ${eqData.variablesText}</div>
+            <div style="margin-top:10px; color:#fffb00;">請在左側填寫動態分配代入過程。</div>
+        `;
+        document.getElementById('nextBtn').style.display = "none";
+    }
+
+    function executeFinalVerify() {
+        let uVal = document.getElementById('rightCampInput').value.replace(/\s+/g,'');
+        if (uVal === eqData.ansStr || uVal === eqData.substituted) {
+            alert("🎯 破譯成功！結構與數值計算完全吻合！");
+            document.getElementById('mathStepBox').innerHTML += `
+                <div style="color:#10b981; margin-top:10px;"><strong>[破譯成功]：</strong>代入得 = ${eqData.substituted}</div>
+                <div style="color:#00ff00;"><strong>最終精確求值 = ${eqData.ansStr} 🎯</strong></div>
+            `;
+            document.getElementById('nextBtn').style.display = "block";
+        } else {
+            alert("❌ 計算數值或帶括號格式不太對喔，防卡死小提示：正確數值是 " + eqData.ansStr);
+        }
     }
 
     function advanceQuestion() {
-        switchSetupConfig('STATS');
+        if (session.endCondition === 'TIME_LIMIT' && timeLeft > 0) {
+            session.score++; session.currentIdx++; session.questionList.push("綜合求值題"); loadEquationToStage();
+        } else if (session.endCondition === 'TARGET_SCORE' && session.score < session.targetScore) {
+            session.score++; session.currentIdx++; session.questionList.push("綜合求值題"); loadEquationToStage();
+        } else if (session.endCondition === 'COUNT' && session.currentIdx < (parseInt(document.getElementById('totalQuestionsInput').value) - 1)) {
+            session.score++; session.currentIdx++; session.questionList.push("綜合求值題"); loadEquationToStage();
+        } else {
+            if (session.endCondition !== 'TIME_LIMIT') session.score++;
+            stopSessionTimer(); switchSetupConfig('STATS');
+        }
     }
 
-    function resetToMainMenu() { window.location.href = "home.html"; }
-    function logoutSession() { if(confirm("確定登出嗎？")) { localStorage.clear(); window.location.href = "index.html"; } }
+    function updateProgressBarUI() {}
+    function resetToMainMenu(nc) { stopSessionTimer(); window.location.href = "home.html"; }
+    function logoutSession() { stopSessionTimer(); localStorage.clear(); window.location.href = "index.html"; }
 
-    // 初始化檢測
     (function init() {
         currentRole = localStorage.getItem("Active_User_Role") || "GUEST";
         document.getElementById('topCenterAccount').innerText = `挑戰者: ${currentRole}`;
