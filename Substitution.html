@@ -170,12 +170,13 @@
 
         .progress-banner { background: rgba(255,255,255,0.2); padding: 15px 20px; border-radius: 12px; font-weight: bold; display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; box-sizing: border-box; }
         .progress-banner-header { display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box; color: white; }
+        .progress-banner-header span { font-size: 14px; font-weight: 800; }
         .progress-bar-container { background: rgba(255,255,255,0.3); width: 100%; height: 10px; border-radius: 10px; overflow: hidden; box-sizing: border-box; }
         .progress-bar-fill { background: var(--success); width: 0%; height: 100%; transition: width 0.4s ease; }
         
         .stage-box { background: var(--stage-bg); border-radius: 16px; padding: 25px; margin: 20px 0; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 120px; text-align: center; font-size: 26px; font-weight: bold; letter-spacing: 1px; line-height: 1.6; border: 1px solid rgba(255,255,255,0.15); }
-        .math-expr-wrapper { display: inline-flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px; vertical-align: middle; }
-        .math-fraction { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; vertical-align: middle; padding: 0 4px; font-size: 24px; }
+        .math-expr-wrapper { display: inline-flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px; vertical-align: middle; line-height: 1; }
+        .math-fraction { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; vertical-align: middle; padding: 0 6px; font-size: 24px; position: relative; top: -2px; }
         .fraction-numerator { text-align: center; padding-bottom: 2px; }
         .fraction-denominator { text-align: center; padding-top: 2px; border-top: 2px solid white; width: 100%; }
 
@@ -225,7 +226,7 @@
 <div id="loadingOverlay" class="loading-overlay" style="display: none;"><div class="spinner"></div><p id="loadingText" style="margin-top:15px;font-weight:bold;">連線中...</p></div>
 
 <div id="topLeftNav" class="top-left-nav">
-    <button class="top-nav-btn" onclick="resetToMainMenu(true)" title="返回學習大廳">&lt; 返回學習大廳</button>
+    <button id="navBackBtn" class="top-nav-btn" onclick="handleNavigationBack()" title="返回學習大廳">&lt; 返回學習大廳</button>
 </div>
 
 <div id="topCenterAccount" class="top-center-account"></div>
@@ -485,7 +486,7 @@
         2: [
             { name: "幾何：長方形面積", target: "A", expr: "l * w", vars: ["l", "w"], range: { l: [5, 18], w: [3, 10] } },
             { name: "物理：運動學路徑", target: "d", expr: "v * t", vars: ["v", "t"], range: { v: [10, 90], t: [2, 6] } },
-            { name: "幾幾何：三角形面積", target: "A", expr: "(b * h) / 2", vars: ["b", "h"], range: { b: [4, 16], h: [3, 12] } },
+            { name: "幾何：三角形面積", target: "A", expr: "(b * h) / 2", vars: ["b", "h"], range: { b: [4, 16], h: [3, 12] } },
             { name: "物理：牛頓第二定律", target: "F", expr: "m * a", vars: ["m", "a"], range: { m: [2, 45], a: [1, 9] } },
             { name: "科學：物質質量", target: "M", expr: "p * V", vars: ["p", "V"], range: { p: [2, 8], V: [4, 25] } }
         ],
@@ -493,7 +494,7 @@
             { name: "幾何：梯形面積", target: "A", expr: "((a + b) * h) / 2", vars: ["a", "b", "h"], range: { a: [2, 8], b: [9, 16], h: [4, 12] } },
             { name: "幾何：長方體表面積簡化項", target: "S", expr: "l * w + l * h + w * h", vars: ["l", "w", "h"], range: { l: [2, 6], w: [2, 5], h: [3, 8] } },
             { name: "物理：等加速位移前段 (s = ut + a)", target: "s", expr: "u * t + a", vars: ["u", "t", "a"], range: { u: [2, 10], t: [2, 5], a: [-4, 8] } },
-            { name: "理財：簡單利息結餘", target: "A", expr: "P * (1 + r / 100)", vars: ["P", "r"], range: { P: [20, 100], r: [1, 8] } }
+            { name: "理財：簡單利息結餘", target: "A", expr: "P + (P * r) / 100", vars: ["P", "r"], range: { P: [20, 100], r: [1, 8] } } // 🎯 修正利息原始公式，去括號避免 Eval Bug
         ],
         4: [
             { name: "幾何：兩點距離平方", target: "D", expr: "(y - b)^2 + (x - a)^2", vars: ["y", "b", "x", "a"], range: { y: [4, 10], b: [-2, 3], x: [5, 11], a: [1, 4] } },
@@ -502,6 +503,21 @@
             { name: "槓桿：力矩平衡未知項", target: "X", expr: "(F * d - f) / D", vars: ["F", "d", "f", "D"], range: { F: [8, 15], d: [2, 5], f: [2, 6], D: [2, 4] } }
         ]
     };
+
+    // 🎯 核心導航按鈕路由引擎：根據當前面板自動調配顯示文字與連結目標
+    function handleNavigationBack() {
+        const isMainMenuActive = document.getElementById('step1').classList.contains('active');
+        if (isMainMenuActive) {
+            // 在主目錄時：直接返回外部大廳
+            window.location.href = "home.html";
+        } else {
+            // 在其他子功能內：彈出安全警告並回到主目錄
+            if (document.getElementById('step2').classList.contains('active') || document.getElementById('step3').classList.contains('active')) {
+                if (!confirm("確定要中途退出挑戰嗎？")) return;
+            }
+            resetToMainMenu(false);
+        }
+    }
 
     function switchSetupConfig(configMode) {
         if (configMode === 'CHALLENGE') {
@@ -578,13 +594,16 @@
         };
     }
 
+    // 🎯 核心渲染修正：徹底消滅 A = P + P\frac{r}{100} 的 LaTeX 字串外露問題，轉化為完美教科書分數格式
     function convertToRichMathHTML(str) {
         let clean = str.replace(/\^2/g, '²').replace(/\*\*/g, '²').replace(/\s*\*\s*/g, '');
-        if (clean.includes('1 + r / 100')) {
-            clean = clean.replace('P(1 + r / 100)', 'P + P\\frac{r}{100}');
+        
+        // 處理簡單利息公式渲染優化
+        if (clean.includes('P+(Pr)/100') || clean.includes('P+(P*r)/100')) {
+            return `<div class="math-expr-wrapper">A = P + <div class="math-fraction"><div class="fraction-numerator">Pr</div><div class="fraction-denominator">100</div></div></div>`;
         }
-        if (clean.includes('((a + b)h)')) {
-            clean = clean.replace('((a + b)h)', '(a + b)h');
+        if (clean.includes('((a+b)h)')) {
+            clean = clean.replace('((a+b)h)', '(a+b)h');
         }
         if (clean.includes('/')) {
             let parts = clean.split('/');
@@ -616,6 +635,18 @@
         let accCenter = document.getElementById('topCenterAccount'); 
         let box = document.getElementById('mainContainer');
         let loginBox = document.getElementById('step0_login');
+        let backBtn = document.getElementById('navBackBtn');
+
+        // 動態調整返回按鈕文字與提示
+        if (backBtn) {
+            if (id === 'step1') {
+                backBtn.innerHTML = "&lt; 返回學習大廳";
+                backBtn.title = "返回學習大廳";
+            } else {
+                backBtn.innerHTML = "&lt; 返回主目錄";
+                backBtn.title = "返回主目錄";
+            }
+        }
 
         if (id === 'step0_login') {
             if(navLeft) navLeft.style.display = 'none'; 
@@ -1005,8 +1036,8 @@
         let n = document.getElementById('nextBtn');
         if(session.currentMode==='CHALLENGE') {
             n.innerText = (session.endCondition==='TIME_LIMIT') ? "下一道瘋狂求值題 ➡️" : ((session.currentIdx < session.questionList.length-1)?"前進下一題 ➡️":"🏁 挑戰結束，查看報告");
-        } else if(session.currentMode==='REVIEW') n.innerText = (session.currentIdx === session.totalQuestions-1 || cacheStorage.EQ.wrongBook.length===0)?"🏁 結束溫習返回學習大廳":"下一道魔王關卡 ➡️";
-        else n.innerText="↩️ 講解完畢，返回學習大廳";
+        } else if(session.currentMode==='REVIEW') n.innerText = (session.currentIdx === session.totalQuestions-1 || cacheStorage.EQ.wrongBook.length===0)?"🏁 結束溫習返回主目錄":"下一道魔王關卡 ➡️";
+        else n.innerText="↩️ 講解完畢，返回主目錄";
     }
 
     function advanceQuestion() {
@@ -1055,19 +1086,12 @@
     }
 
     function resetToMainMenu(nc) {
-    if(nc && (document.getElementById('step2').classList.contains('active') || document.getElementById('step3').classList.contains('active'))) {
-        if(!confirm("確定要中途退出挑戰嗎？")) return;
+        if(nc && (document.getElementById('step2').classList.contains('active')||document.getElementById('step3').classList.contains('active'))) {
+            if(!confirm("確定要中途退出挑戰嗎？")) return;
+        }
+        stopSessionTimer(); document.getElementById('nextBtn').style.display="none"; document.getElementById('teachingZone').style.display="none";
+        cloudSaveData(); updateReviewMenuUI(); showPanel('step1');
     }
-    stopSessionTimer(); 
-    if(document.getElementById('nextBtn')) document.getElementById('nextBtn').style.display="none"; 
-    if(document.getElementById('teachingZone')) document.getElementById('teachingZone').style.display="none";
-    
-    cloudSaveData(); 
-    updateReviewMenuUI(); 
-    
-    // 🎯 核心修改：不再停留在當前頁面的 step1，而是直接跳轉到大廳首頁
-    window.location.href = "home.html"; 
-}
 
     function logoutSession() {
         if(confirm("確定登出系統嗎？")) {
