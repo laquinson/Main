@@ -1057,6 +1057,64 @@ function showPanel(id) {
             stopSessionTimer(); localStorage.clear(); userRawClass=""; userRawSeat=""; toggleLoginMode('STUDENT'); showPanel('step0_login');
         }
     }
+    // ⏱️ 補齊系統缺失的計時器核心引擎
+function startSessionTimer(seconds) {
+    stopSessionTimer();
+    timeLeft = seconds;
+    const timerBox = document.getElementById('globalTimerBox');
+    const timerBox3 = document.getElementById('globalTimerBoxStage3');
+    if (timerBox) timerBox.style.display = 'inline-block';
+    if (timerBox3) timerBox3.style.display = 'inline-block';
+
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        let min = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+        let sec = String(timeLeft % 60)).padStart(2, '0');
+        let timeStr = `⏱️ ${min}:${sec}`;
+        
+        if (timerBox) timerBox.innerText = timeStr;
+        if (timerBox3) timerBox3.innerText = timeStr;
+
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            alert("⏳ 時間到！限時瘋狂衝分挑戰結束！");
+            calculateAndRenderStats();
+            showPanel('step_stats_panel');
+        }
+    }, 1000);
+}
+
+function stopSessionTimer() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+    const timerBox = document.getElementById('globalTimerBox');
+    const timerBox3 = document.getElementById('globalTimerBoxStage3');
+    if (timerBox) timerBox.style.display = 'none';
+    if (timerBox3) timerBox3.style.display = 'none';
+}
+
+// 🎯 完善路由分流引擎（加入安全防禦邏輯）
+function switchSetupConfig(configMode) {
+    if (configMode === 'CHALLENGE') {
+        showPanel('step1_challenge');
+    } else if (configMode === 'STATS') {
+        calculateAndRenderStats();
+        showPanel('step_stats_panel');
+    } else if (configMode === 'SOLVER') {
+        showPanel('step1_solver');
+    } else if (configMode === 'REVIEW') {
+        let count = (cacheStorage.EQ.wrongBook || []).length;
+        if (count > 0) {
+            initReviewSession();
+        } else {
+            alert("🎉 太棒了！目前沒有未消滅的錯題。");
+        }
+    } else if (configMode === 'CHG_PWD') {
+        showPanel('step1_chgpwd');
+    }
+}
 </script>
 </body>
 </html>
