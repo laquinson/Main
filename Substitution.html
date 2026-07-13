@@ -81,7 +81,7 @@
 <div class="container" id="mainContainer">
     
     <!-- 主選單目錄 -->
-    <div id="step1" class="step-panel active">
+    <div id="step1" class="step-panel dashboard-wrapper active">
         <h2 style="text-align:left; margin-top:0;">請選擇挑戰模式</h2>
         <div class="dashboard-grid">
             <div class="dash-btn bg-purple" onclick="switchSetupConfig('CHALLENGE')">
@@ -114,7 +114,7 @@
         <button onclick="initChallengeSession()" class="btn-success">🎲 生成關卡，出發！</button>
     </div>
 
-    <!-- 有問必答自訂面板 (已修復修飾對齊 Bug) -->
+    <!-- 有問必答自訂面板 -->
     <div id="step1_solver" class="step-panel">
         <h2>🛠️ 數學有問必答 (自訂代入)</h2>
         <div class="form-group"><label>✏️ 請輸入代數公式主體：</label><input type="text" id="eqInput" placeholder="例如: 3x + 2y 或 (a+b)h/2" autocomplete="off"></div>
@@ -157,9 +157,10 @@
     let currentPanelId = "step1";
     let currentRole = "STUDENT", userRawClass = "", userRawSeat = "";
     let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, score: 0, currentIdx: 0, questionList: [] };
+    let cacheStorage = { EQ: { wrongBook: [] } };
     let currentAns = 0, currentExplanation = "";
 
-    // 生命週期安全保障
+    // DOM 生命週期安全防禦
     document.addEventListener('DOMContentLoaded', function() {
         try {
             renderTypeSelectOptions();
@@ -167,7 +168,7 @@
         } catch(e) { console.error(e); showPanel('step1'); }
     });
 
-    // 免登入秒速直達攔截門
+    // 免登入攔截門與【快取自癒安全防禦機制】
     function checkActiveSession() {
         let savedRole = localStorage.getItem("Active_User_Role");
         let savedClass = localStorage.getItem("Active_User_Class");
@@ -184,6 +185,23 @@
                 accountDOM.innerText = `挑戰者: ${userRawClass}班${String(userRawSeat).padStart(2, '0')}號`;
             }
         }
+
+        // 🌟 核心快取修復防線：防止讀取舊版污染格式導致一般模式死鎖
+        try {
+            let localCache = localStorage.getItem(`MultiVarCache_${userRawClass}-${userRawSeat}`);
+            if(localCache) {
+                let parsed = JSON.parse(localCache);
+                cacheStorage.EQ.wrongBook = parsed.wrongBook || [];
+            } else {
+                cacheStorage.EQ.wrongBook = [];
+            }
+        } catch(e) {
+            console.warn("偵測到舊版代數快取干擾，已自動執行安全初始化修復。");
+            cacheStorage.EQ.wrongBook = [];
+            localStorage.setItem(`MultiVarCache_${userRawClass}-${userRawSeat}`, JSON.stringify({ wrongBook: [] }));
+        }
+
+        updateReviewMenuUI();
         showPanel('step1');
     }
 
@@ -198,7 +216,6 @@
         document.getElementById('timeLimitInputWrapper').style.display = c==='TIME_LIMIT' ? 'block' : 'none';
     }
 
-    // 完美全閉環面板切換防線
     function showPanel(id) { 
         document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active')); 
         const targetPanel = document.getElementById(id);
@@ -220,9 +237,14 @@
         if (configMode === 'CHALLENGE') showPanel('step1_challenge');
         else if (configMode === 'SOLVER') showPanel('step1_solver');
         else if (configMode === 'STATS') { document.getElementById('statsFinalScore').innerText = session.score + " 分"; showPanel('step_stats_panel'); }
+        else if (configMode === 'REVIEW') {
+            if ((cacheStorage.EQ.wrongBook || []).length === 0) { alert("🎉 目前沒有未消滅的代數式錯題紀錄！"); return; }
+            session.score = 0; session.currentIdx = 0; session.questionList = [...cacheStorage.EQ.wrongBook];
+            loadEquationToStage();
+        }
     }
 
-    // 跨學科智能出題引擎 (完美分數教科書格式)
+    // 跨學科出題題庫
     function generateSubstitutionQuestion(type) {
         let qType = (type === 'MIX') ? (Math.random() > 0.5 ? 1 : 2) : Number(type);
         if(qType === 1) {
@@ -247,19 +269,14 @@
         loadEquationToStage();
     }
 
-    // 徹底修復：自訂有問必答解析功能
     function handleManualSolverInput() {
         let expr = document.getElementById('eqInput').value.trim() || "3x + 2y";
         let vals = document.getElementById('xValueInput').value.trim() || "x=2, y=5";
-        
-        session.score = 0;
-        session.currentIdx = 0;
-        session.questionList = [`🛠️ 自訂計算引導：求算式 <b>${expr}</b> 的值。<br>已知條件為：${vals}。|引導模式|處理中`];
-        
+        session.score = 0; session.currentIdx = 0;
+        session.questionList = [`🛠️ 自訂計算引導：求算式 <b>${expr}</b> 的值。<br>已知條件為：${vals}。|引引引|自訂處理中`];
         document.getElementById('scoreText').innerText = `自訂模式`;
-        document.getElementById('progressText').innerText = `解析引導中`;
+        document.getElementById('progressText').innerText = `動態引導`;
         document.getElementById('displayEq').innerHTML = `計算目標：<span style="color:#fffb00;">${expr}</span><br>給定條件：${vals}`;
-        
         currentAns = "引導模式"; 
         currentExplanation = `<b>步驟 1 (對號入座)：</b>將算式中的變數替換為條件給定的數值。<br><b>步驟 2 (四則運算)：</b>遵循「先乘除、後加減」的順序完成計算，求出最終結果。`;
         showPanel('step2');
@@ -278,13 +295,23 @@
 
     function checkFirstAnswer() {
         let input = document.getElementById('ansInput').value.trim();
+        let currentQ = session.questionList[session.currentIdx];
         if(currentAns === "引導模式") {
             alert("🎯 成功啟動隱形括號破譯引導！");
         } else if(Number(input) === Number(currentAns)) {
             session.score++; alert("🎯 太棒了，計算完全正確！");
+            if (session.currentMode === 'REVIEW') {
+                cacheStorage.EQ.wrongBook = cacheStorage.EQ.wrongBook.filter(q => q !== currentQ);
+                localStorage.setItem(`MultiVarCache_${userRawClass}-${userRawSeat}`, JSON.stringify({ wrongBook: cacheStorage.EQ.wrongBook }));
+            }
         } else {
             alert(`❌ 答案不太對喔！標準答案是 ${currentAns}。讓我們來看步驟拆解！`);
+            if (!cacheStorage.EQ.wrongBook.includes(currentQ) && currentAns !== "引導模式") {
+                cacheStorage.EQ.wrongBook.push(currentQ);
+                localStorage.setItem(`MultiVarCache_${userRawClass}-${userRawSeat}`, JSON.stringify({ wrongBook: cacheStorage.EQ.wrongBook }));
+            }
         }
+        updateReviewMenuUI();
         document.getElementById('interactiveStageBox').innerHTML = `解題總結：${currentAns}`;
         document.getElementById('mathStepBox').innerHTML = currentExplanation;
         showPanel('step3');
@@ -297,6 +324,14 @@
         } else {
             switchSetupConfig('STATS');
         }
+    }
+
+    function updateReviewMenuUI() {
+        let count = (cacheStorage.EQ.wrongBook || []).length;
+        let card = document.getElementById('reviewModeCard');
+        if (card) card.classList.toggle('disabled', count === 0);
+        let title = document.getElementById('reviewTitle');
+        if (title) title.innerText = `🗂️ 錯題庫 (${count})`;
     }
 
     function logoutSession() { localStorage.clear(); window.location.replace("index.html"); }
