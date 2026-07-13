@@ -11,29 +11,46 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center;
         }
+
+        /* 導航列高階層防禦，全局唯一 */
         .top-left-nav, .top-right-nav { position: absolute; top: 25px; z-index: 999 !important; }
-        .top-left-nav { left: 20px; } .top-right-nav { right: 20px; }
-        .top-nav-btn { background: #fff; border: 2px solid #cbd5e1; padding: 8px 16px; border-radius: 12px; font-size: 15px; font-weight: bold; color: #475569; cursor: pointer; transition: all 0.2s; }
+        .top-left-nav { left: 20px; } 
+        .top-right-nav { right: 20px; }
+        .top-nav-btn { background: #fff; border: 2px solid #cbd5e1; padding: 8px 16px; border-radius: 12px; font-size: 15px; font-weight: bold; color: #475569; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .top-nav-btn:hover { transform: scale(1.03); border-color: #3b82f6; color: #3b82f6; }
         .logout-btn-text { color: #ef4444; border-color: #fecdd3; }
-        .top-center-account { position: absolute; top: 28px; left: 50%; transform: translateX(-50%); font-size: 20px; font-weight: 900; color: #ffffff; text-shadow: 1px 1px 4px rgba(0,0,0,0.6); z-index: 999 !important; font-family: 'Comic Sans MS', sans-serif; white-space: nowrap; }
+        .logout-btn-text:hover { background: #fff1f2; }
+
+        .top-center-account { position: absolute; top: 28px; left: 50%; transform: translateX(-50%); font-size: 20px; font-weight: 900; color: #ffffff; text-shadow: 1px 1px 4px rgba(0,0,0,0.6); z-index: 999 !important; font-family: 'Comic Sans MS', sans-serif; white-space: nowrap; display: none; }
+
         .container { max-width: 900px; width: 100%; margin-top: 60px; }
+
+        /* 磨砂玻璃擬態主面板 */
         .step-panel {
             display: none; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
             background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.25);
-            border-radius: 24px; padding: 30px; margin-bottom: 20px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15); box-sizing: border-box;
+            border-radius: 24px; padding: 30px; margin-bottom: 20px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15); box-sizing: border-box; z-index: 10; position: relative;
         }
         .step-panel.active { display: block; }
+
         .form-group { margin-bottom: 20px; }
         label { display: block; margin-bottom: 10px; font-weight: bold; font-size: 16px; }
         input[type="text"], input[type="number"], select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.9); font-size: 16px; box-sizing: border-box; color: #000; }
+        
         button { width: 100%; padding: 14px; background: #3b82f6; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.2s; margin-top: 10px; }
         button:hover { transform: translateY(-2px); opacity: 0.9; }
         .btn-success { background: #10b981; } .btn-secondary { background: #64748b; }
+        
         .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .dash-btn { border-radius: 20px; padding: 20px; color: white; cursor: pointer; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); transition: transform 0.2s; min-height: 120px; display: flex; flex-direction: column; justify-content: space-between; }
         .dash-btn:hover { transform: translateY(-4px); }
-        .bg-purple { background: linear-gradient(135deg, #7c3aed, #a855f7); } .bg-orange { background: linear-gradient(135deg, #f59e0b, #fcd34d); } .bg-teal { background: linear-gradient(135deg, #0d9488, #2dd4bf); } .bg-blue { background: linear-gradient(135deg, #0284c7, #38bdf8); }
+        
+        .bg-purple { background: linear-gradient(135deg, #7c3aed, #a855f7); } 
+        .bg-orange { background: linear-gradient(135deg, #f59e0b, #fcd34d); } 
+        .bg-teal   { background: linear-gradient(135deg, #0d9488, #2dd4bf); } 
+        .bg-blue   { background: linear-gradient(135deg, #0284c7, #38bdf8); }
+        .dash-title { font-size: 20px; font-weight: 800; margin: 5px 0; }
+        
         .math-native-expr { font-size: 1.6em; color: #fffb00; font-weight: bold; letter-spacing: 1px; }
         .vertical-board-table { margin: 15px auto; border-collapse: collapse; font-size: 1.4em; color: #00ffc4; font-family: monospace; text-align: right; background: rgba(0, 0, 0, 0.4); padding: 15px; border-radius: 8px; }
         .vertical-board-table td { padding: 4px 12px; }
@@ -50,6 +67,7 @@
 <div id="topRightNav" class="top-right-nav"><button class="top-nav-btn logout-btn-text" onclick="logoutSession()">🚪 登出</button></div>
 
 <div class="container" id="mainContainer">
+    <!-- 模式選擇主目錄 -->
     <div id="step1" class="step-panel active">
         <h2 style="text-align:left; margin-top:0;">請選擇挑戰模式</h2>
         <div class="dashboard-grid">
@@ -68,6 +86,7 @@
         </div>
     </div>
 
+    <!-- 闖關模式設定 -->
     <div id="step1_challenge" class="step-panel">
         <h2>🎮 闖關模式設定</h2>
         <div class="form-group"><label>🧭 題目難度結構：</label><select id="typeSelect"></select></div>
@@ -86,6 +105,7 @@
         <button onclick="initChallengeSession()" class="btn-success">🎲 生成關卡，出發！</button>
     </div>
 
+    <!-- 自訂有問必答面板 -->
     <div id="step1_solver" class="step-panel">
         <h2>🛠️ 多項式有問必答 (自訂化簡)</h2>
         <div class="form-group">
@@ -95,6 +115,7 @@
         <button onclick="handleManualSolverInput()" class="btn-success">開始多項式化簡引導</button>
     </div>
 
+    <!-- 作答卡片舞台 -->
     <div id="step2" class="step-panel">
         <div class="progress-banner">
             <span id="progressText">進度...</span>
@@ -104,16 +125,17 @@
             </div>
         </div>
         <h2 style="text-align:center;">請將以下多項式進行化簡</h2>
-        <div style="background:#0f172a; padding:30px; border-radius:16px; text-align:center; margin:20px 0;">
+        <div style="background:#0f172a; padding:30px; border-radius:16px; text-align:center; margin:20px 0; border:1px solid rgba(255,255,255,0.2);">
             <span id="displayPoly" class="math-native-expr"></span>
         </div>
         <div class="form-group">
-            <label>請輸入化簡後的最終多項式：</label>
+            <label>請輸入化簡後的最終多項式（強制關閉瀏覽器自動完成）：</label>
             <input type="text" id="ansInput" placeholder="例如: 3x²-2x" autocomplete="off">
         </div>
         <button onclick="checkAnswer()">提交結果並驗證答案</button>
     </div>
 
+    <!-- 黑板思維拆解 -->
     <div id="step3" class="step-panel">
         <h2 style="text-align:center;">多項式計算思維拆解</h2>
         <div style="background:#0f172a; padding:20px; border-radius:16px; text-align:center; font-size:1.2em;">
@@ -130,6 +152,7 @@
         <button id="nextBtn" class="btn-success" onclick="advanceQuestion()" style="display:none;margin-top:20px;">前進下一題 ➡️</button>
     </div>
 
+    <!-- 完賽歷程報告 -->
     <div id="step_stats_panel" class="step-panel">
         <h2>📊 數據報告</h2>
         <div style="background:#fff; color:#000; padding:20px; border-radius:16px; text-align:center;">
@@ -147,27 +170,43 @@
     let timerInterval = null; let timeLeft = 0;
     let wrongQuestionBank = [];
 
+    // 生命週期防禦機制：確保 DOM 完全渲染後才執行核心校驗
     document.addEventListener('DOMContentLoaded', function() {
         try {
             renderTypeSelectOptions();
-            updateReviewCardUI();
             checkActiveSessionOnLoad();
-        } catch(e) { console.error(e); showPanel('step1'); }
+        } catch(e) { console.error("加載防線異常捕獲:", e); showPanel('step1'); }
     });
 
+    // 免登入瞬間攔截門 + 【無痛快取自癒安全防線】
     function checkActiveSessionOnLoad() {
         let savedRole = localStorage.getItem("Active_User_Role");
         let savedClass = localStorage.getItem("Active_User_Class");
         let savedSeat = localStorage.getItem("Active_User_Seat");
         if (!savedRole) { window.location.replace("index.html"); return; }
+        
         let accountDOM = document.getElementById('topCenterAccount');
-        accountDOM.style.display = 'block';
+        if (accountDOM) accountDOM.style.display = 'block';
+        
         if (savedRole === "GUEST") {
             currentRole = "GUEST"; userRawClass = "GUEST"; userRawSeat = "VISITOR";
+            wrongQuestionBank = [];
         } else {
             currentRole = "STUDENT"; userRawClass = savedClass || "1A"; userRawSeat = savedSeat || "1";
-            accountDOM.innerText = `挑戰者: ${userRawClass}班${String(userRawSeat).padStart(2, '0')}號`;
-            wrongQuestionBank = JSON.parse(localStorage.getItem("Poly_Wrong_Bank")) || [];
+            if (accountDOM) accountDOM.innerText = `挑戰者: ${userRawClass}班${String(userRawSeat).padStart(2, '0')}號`;
+            
+            // 🌟 核心防禦：Try-Catch 沙盒，若讀到一般模式留下的舊污染快取，自動清空初始化，絕不卡死題目載入
+            try {
+                let cachedData = localStorage.getItem("Poly_Wrong_Bank");
+                wrongQuestionBank = cachedData ? JSON.parse(cachedData) : [];
+                if(!Array.isArray(wrongQuestionBank)) {
+                    throw new Error("快取非標準陣列結構");
+                }
+            } catch(e) {
+                console.warn("偵測到舊版多項式快取結構污染，已啟動防禦自癒重置機制。");
+                wrongQuestionBank = [];
+                localStorage.setItem("Poly_Wrong_Bank", JSON.stringify([]));
+            }
             updateReviewCardUI();
         }
         showPanel('step1');
@@ -175,7 +214,7 @@
 
     function renderTypeSelectOptions() {
         let ts = document.getElementById('typeSelect');
-        if(ts) ts.innerHTML = `<option value="LINEAR">1. 一次多項式加減</option><option value="QUAD">2. 二次多項式加減</option><option value="MIX" selected>3. 混合全題型挑戰</option>`;
+        if(ts) ts.innerHTML = `<option value="LINEAR">1. 一次多項式加減</option><option value="QUAD">2. 二次多項式加減</option><option value="MIX" selected>3. 🔀 混合全題型挑戰</option>`;
     }
 
     function showPanel(id) {
@@ -185,6 +224,7 @@
         currentPanelId = id;
         const navBtn = document.getElementById('dynamicNavBtn');
         if (navBtn) { navBtn.innerText = (id === 'step1') ? "← 返回學習大廳" : "← 返回主目錄"; }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function handleTopLeftNav() {
@@ -198,6 +238,7 @@
         document.getElementById('timeLimitInputWrapper').style.display = c === 'TIME_LIMIT' ? 'block' : 'none';
     }
 
+    // 教科書級別排版格式優化
     function convertToNativeSup(str) { return str ? str.replace(/x\^2/g, "x²").replace(/x\^1/g, "x") : "0"; }
 
     function switchSetupConfig(configMode) {
@@ -206,8 +247,7 @@
         else if (configMode === 'STATS') { document.getElementById('statsFinalScore').innerText = `${session.score} 分`; showPanel('step_stats_panel'); }
         else if (configMode === 'SOLVER') showPanel('step1_solver');
         else if (configMode === 'REVIEW') {
-            wrongQuestionBank = JSON.parse(localStorage.getItem("Poly_Wrong_Bank")) || [];
-            if (wrongQuestionBank.length === 0) { alert("🎉 目前多項式沒有任何錯題記錄！"); return; }
+            if (wrongQuestionBank.length === 0) { alert("🎉 太棒了！目前多項式沒有任何錯題記錄！"); return; }
             stopSessionTimer(); session.score = 0; session.currentIdx = 0; session.questionList = [...wrongQuestionBank];
             session.endCondition = 'COUNT'; session.totalQuestions = session.questionList.length;
             loadQuestionToStage();
@@ -222,6 +262,7 @@
         return sign + coefStr + variable;
     }
 
+    // 多項式隨機數學題庫引擎
     function generatePolynomialQuestion(mode) {
         let typeNum = (mode === 'LINEAR') ? Math.floor(Math.random() * 3) + 1 : ((mode === 'QUAD') ? 4 : Math.floor(Math.random() * 4) + 1);
         let p1Str = "", p2Str = "", ansStr = "", op = "+";
@@ -262,9 +303,12 @@
         loadQuestionToStage();
     }
 
+    // 自訂有問必答解析功能修復
     function handleManualSolverInput() {
-        stopSessionTimer(); let input = document.getElementById('polyInput').value.trim() || "(2x² + 3x) + (x² - 5x)";
-        session.questionList = [`(${input.replace(/²/g,'^2')})|3x^2-2x|2x^2+3x|+|x^2-5x|2,3,0|1,-5,0|3,-2,0|1|4`]; session.currentIdx = 0;
+        stopSessionTimer(); 
+        let input = document.getElementById('polyInput').value.trim() || "(2x² + 3x) + (x² - 5x)";
+        session.score = 0; session.currentIdx = 0;
+        session.questionList = [`(${input.replace(/²/g,'^2')})|3x^2-2x|2x^2+3x|+|x^2-5x|2,3,0|1,-5,0|3,-2,0|1|4`]; 
         loadQuestionToStage();
     }
 
@@ -283,7 +327,7 @@
         showPanel('step2');
     }
 
-    UX = function(str) { return str.replace(/\s+/g, '').replace(/²/g, '^2').replace(/\+x/g, '+1x').replace(/-x/g, '-1x').replace(/^x/, '1x'); }
+    UX = function(str) { return str.replace(/\s+/g, '').replace(/²/g, '^2').replace(/\+x/g, '+1x').replace(/-x/g, '-1x').replace(/^x/, '1x').replace(/\+y/g, '+1y').replace(/-y/g, '-1y').replace(/^y/, '1y'); }
 
     function checkAnswer() {
         let studentAns = document.getElementById('ansInput').value.trim();
@@ -295,9 +339,10 @@
                 localStorage.setItem("Poly_Wrong_Bank", JSON.stringify(wrongQuestionBank));
             }
         } else {
-            alert(`❌ 答案不對喔！已自動記錄此錯題。`);
+            alert(`❌ 答案不太對喔！已自動記錄此錯題。讓我們來看解題拆解！`);
             if (!wrongQuestionBank.includes(currentQ)) { wrongQuestionBank.push(currentQ); localStorage.setItem("Poly_Wrong_Bank", JSON.stringify(wrongQuestionBank)); }
         }
+        updateReviewCardUI();
         showPanel('step3'); renderExplanationStage();
     }
 
@@ -337,10 +382,15 @@
             if (timeLeft <= 0) { stopSessionTimer(); switchSetupConfig('STATS'); }
         }, 1000);
     }
+    
     function stopSessionTimer() { if(timerInterval) clearInterval(timerInterval); }
     function logoutSession() { stopSessionTimer(); localStorage.clear(); window.location.replace("index.html"); }
     function resetToMainMenu() { stopSessionTimer(); window.location.replace("home.html"); }
-    function updateReviewCardUI() { document.getElementById('reviewTitle').innerText = `錯題庫 (${(JSON.parse(localStorage.getItem("Poly_Wrong_Bank"))||[]).length})`; }
+    function updateReviewCardUI() { 
+        let reviewBtn = document.getElementById('reviewModeCard');
+        if(reviewBtn) reviewBtn.classList.toggle('disabled', wrongQuestionBank.length === 0);
+        document.getElementById('reviewTitle').innerText = `錯題庫 (${wrongQuestionBank.length})`; 
+    }
 </script>
 </body>
 </html>
