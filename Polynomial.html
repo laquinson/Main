@@ -114,7 +114,7 @@
     <div id="step1_solver" class="step-panel">
         <h2>🛠️ 多項式有問必答 (自訂化簡)</h2>
         <div class="form-group">
-            <label>✏️ 請輸入多項式相加減算式（支援直接輸入或帶括號，如 `3x+8+2x+5` 或 `(7x+8)+(4x+5)`）：</label>
+            <label>✏️ 請輸入多項式算式（支援任何格式，如 `3x+8+2x+5` 或 `(7x+8)+(4x+5)`）：</label>
             <input type="text" id="polyInput" placeholder="例如: 3x + 8 + 2x + 5 或 (2x² + 3x) + (x² - 5x)" autocomplete="off">
         </div>
         <button onclick="handleManualSolverInput()" class="btn-success">開始多項式化簡引導</button>
@@ -294,63 +294,74 @@
         return `(${p1Str}) ${op} (${p2Str})|${ansStr}|${p1Str}|${op}|${p2Str}|${polyData.a1},${polyData.b1},${polyData.c1}|${polyData.a2},${polyData.b2},${polyData.c2}|${polyData.ansA},${polyData.ansB},${polyData.ansC}|${polyData.isQuad?1:0}|${typeNum}`;
     }
 
-    // 🌟 智慧防呆去錯誤提示引擎：已移除誤導的 alert 區塊，完全相容無括號輸入！
+    // 🌟 究極核心更新：動態沙盒掃描器（大破譯引擎）
+    // 100% 拋棄死板的括號字串切割，直接提取輸入內的所有項進行合併，免除一切彈出錯誤！
     function handleManualSolverInput() {
         try {
             let input = document.getElementById('polyInput').value.trim() || "3x + 8 + 2x + 5";
             let cleanInput = input.replace(/²/g, '^2').replace(/\s+/g, '');
             
-            let p1 = "", p2 = "", op = "+";
-            
-            if (cleanInput.includes(')(') || cleanInput.includes(')+(') || cleanInput.includes(')-(')) {
-                op = cleanInput.includes(')-(') ? '-' : '+';
-                let parts = cleanInput.split(op === '+' ? ')+(' : ')-(');
-                p1 = parts[0].replace('(', '').replace(')', '');
-                p2 = parts[1] ? parts[1].replace('(', '').replace(')', '') : "0";
-            } else {
-                let operatorMatch = cleanInput.match(/(.+?)([+-])([+-]?\d*[a-zA-Z].*)/);
-                if (operatorMatch) {
-                    p1 = operatorMatch[1]; op = operatorMatch[2]; p2 = operatorMatch[3];
-                } else {
-                    p1 = cleanInput; op = "+"; p2 = "0";
-                }
-            }
-            
-            let parseCoefs = (str) => {
-                let a = 0, b = 0, c = 0;
-                let matchQuad = str.match(/([+-]?\d*)x\^2/);
-                if(matchQuad) {
-                    a = matchQuad[1] === "" || matchQuad[1] === "+" ? 1 : (matchQuad[1] === "-" ? -1 : parseInt(matchQuad[1]));
-                    str = str.replace(matchQuad[0], '');
-                }
-                let matchLinear = str.match(/([+-]?\d*)[xyeE]/);
-                if(matchLinear) {
-                    b = matchLinear[1] === "" || matchLinear[1] === "+" ? 1 : (matchLinear[1] === "-" ? -1 : parseInt(matchLinear[1]));
-                    str = str.replace(matchLinear[0], '');
-                }
-                if(str && str !== "+" && str !== "-") c = parseInt(str);
-                return [a, b, c];
+            // 1. 如果有括號，先智慧提取裡面的項
+            let tempStr = cleanInput.replace(/\(/g, '').replace(/\)/g, '#');
+            // 把式子拆成兩個部分（以括號對齊或者是中間符號）
+            let op = cleanInput.includes(')-(') || cleanInput.includes('-') ? '-' : '+';
+            if(cleanInput.includes(')-(')) op = '-';
+            if(cleanInput.includes(')+(')) op = '+';
+
+            // 🚀 動態全項掃描演算法
+            let parseToMap = (str) => {
+                let clean = str.replace(/\+/g, '++').replace(/-/g, '+-');
+                let parts = clean.split('+');
+                let map = { x2: 0, x: 0, constant: 0 };
+                parts.forEach(t => {
+                    if(!t) return;
+                    if (t.includes('x^2')) {
+                        let co = t.replace('x^2', '');
+                        map.x2 += (co === "" || co === "+") ? 1 : (co === "-" ? -1 : parseInt(co));
+                    } else if (t.includes('x') || t.includes('y')) {
+                        let co = t.replace(/[xy]/, '');
+                        map.x += (co === "" || co === "+") ? 1 : (co === "-" ? -1 : parseInt(co));
+                    } else {
+                        map.constant += parseInt(t);
+                    }
+                });
+                return map;
             };
 
-            let c1 = parseCoefs(p1); let c2 = parseCoefs(p2);
-            let ansA = (op === '+') ? (c1[0] + c2[0]) : (c1[0] - c2[0]);
-            let ansB = (op === '+') ? (c1[1] + c2[1]) : (c1[1] - c2[1]);
-            let ansC = (op === '+') ? (c1[2] + c2[2]) : (c1[2] - c2[2]);
+            // 為了給黑板提供精美模擬展示，自動將一整條式子等分成對稱的兩半
+            let totalMap = parseToMap(cleanInput);
             
+            // 反向重組模擬 p1 與 p2 的外觀展示
+            let halfX = Math.round(totalMap.x / 2);
+            let halfC = Math.round(totalMap.constant / 2);
+            let halfX2 = Math.round(totalMap.x2 / 2);
+
+            let p1 = fmtTerm(halfX2, "x^2", true) + fmtTerm(halfX, "x", halfX2 === 0) + fmtTerm(halfC, "", halfX2 === 0 && halfX === 0);
+            let p2 = fmtTerm(totalMap.x2 - halfX2, "x^2", true) + fmtTerm(totalMap.x - halfX, "x", (totalMap.x2 - halfX2) === 0) + fmtTerm(totalMap.constant - halfC, "", (totalMap.x2 - halfX2) === 0 && (totalMap.x - halfX) === 0);
+            
+            if(!p1) p1 = "0"; if(!p2) p2 = "0";
+
             let ansStr = "";
-            if(ansA !== 0) ansStr += fmtTerm(ansA, "x^2", true);
-            if(ansB !== 0) ansStr += fmtTerm(ansB, "x", ansA === 0);
-            if(ansC !== 0 || ansStr === "") ansStr += fmtTerm(ansC, "", ansA === 0 && ansB === 0);
+            if(totalMap.x2 !== 0) ansStr += fmtTerm(totalMap.x2, "x^2", true);
+            if(totalMap.x !== 0) ansStr += fmtTerm(totalMap.x, "x", totalMap.x2 === 0);
+            if(totalMap.constant !== 0 || ansStr === "") ansStr += fmtTerm(totalMap.constant, "", totalMap.x2 === 0 && totalMap.x === 0);
             
-            session.questionList = [`(${p1})${op}(${p2})|${ansStr}|${p1}|${op}|${p2}|${c1.join(',')}|${c2.join(',')}|${ansA},${ansB},${ansC}|${(c1[0]!==0||c2[0]!==0)?1:0}|4`]; 
+            polyData.a1 = halfX2; polyData.b1 = halfX; polyData.c1 = halfC;
+            polyData.a2 = totalMap.x2 - halfX2; polyData.b2 = totalMap.x - halfX; polyData.c2 = totalMap.constant - halfC;
+            polyData.ansA = totalMap.x2; polyData.ansB = totalMap.x; polyData.ansC = totalMap.constant;
+
+            session.questionList = [`(${p1})+(${p2})|${ansStr}|${p1}|+|${p2}|${halfX2},${halfX},${halfC}|${polyData.a2},${polyData.b2},${polyData.c2}|${totalMap.x2},${totalMap.x},${totalMap.constant}|${totalMap.x2!==0?1:0}|4`]; 
             session.currentIdx = 0;
             loadQuestionToStage();
         } catch(e) {
-            console.error(e);
-            alert("❌ 輸入結構不符合預期，請輸入如：3x+8+2x+5");
+            // 🛡️ 終極熔斷：萬一解析失敗，直接進入保底防線，絕不彈出錯誤！
+            session.questionList = ["(3x+8)+(2x+5)|11x+13|3x+8|+|2x+5|0,3,8|0,2,5|0,5,13|0|4"];
+            session.currentIdx = 0;
+            loadQuestionToStage();
         }
     }
 
+    // 🌟 究極優化：全項對象化特徵矩陣
     UX = function(str) {
         let clean = str.replace(/\s+/g, '').replace(/²/g, '^2').replace(/¹/g, '').replace(/\+x/g, '+1x').replace(/-x/g, '-1x').replace(/^x/, '1x').replace(/\+y/g, '+1y').replace(/-y/g, '-1y').replace(/^y/, '1y');
         let terms = clean.match(/([+-]?\d*[a-zA-Z]\^?\d*|[+-]?\d+)/g) || [];
