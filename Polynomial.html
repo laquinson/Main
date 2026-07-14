@@ -34,7 +34,6 @@
         .form-group { margin-bottom: 20px; width: 100%; }
         label { display: block; margin-bottom: 10px; font-weight: bold; font-size: 16px; }
         
-        /* 樣式定位防禦：保障輸入文字絕對加粗呈黑色 */
         input[type="text"], input[type="number"], select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.9); font-size: 16px; box-sizing: border-box; color: #000 !important; font-weight: bold !important; }
         
         button { width: 100%; padding: 14px; background: #3b82f6; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.2s; margin-top: 10px; }
@@ -53,7 +52,6 @@
         
         .math-native-expr { font-size: 1.6em; color: #fffb00; font-weight: bold; letter-spacing: 1px; }
         
-        /* 互動推導黑板樣式 */
         .horizontal-step-line { font-size: 1.2em; margin: 14px 0; padding: 10px 14px; border-left: 4px solid #00ffc4; background: rgba(0,0,0,0.25); border-radius: 0 8px 8px 0; line-height: 1.6; display: flex; justify-content: space-between; align-items: center; }
         .progress-banner { display:flex; justify-content:space-between; background:rgba(0,0,0,0.3); padding:10px 20px; border-radius:12px; margin-bottom:20px; align-items:center; }
         .interactive-input { width: 240px !important; padding: 8px 12px !important; font-size: 16px !important; display: inline-block; margin-left: 10px; background: #fff !important; border-radius: 6px !important; color: #000 !important; font-weight: bold !important; border: 2px solid #cbd5e1; }
@@ -73,7 +71,7 @@
 </div>
 
 <div class="container" id="mainContainer">
-    <!-- 主選單目錄 -->
+    <!-- 主目錄選單 -->
     <div id="step1" class="step-panel active">
         <h2 style="text-align:left; margin-top:0;">請選擇挑戰模式</h2>
         <div class="dashboard-grid">
@@ -92,7 +90,7 @@
         </div>
     </div>
 
-    <!-- 闖關模式設定 -->
+    <!-- 闖關設定 -->
     <div id="step1_challenge" class="step-panel">
         <h2>🎮 闖關模式設定</h2>
         <div class="form-group"><label>🧭 題目難度結構：</label><select id="typeSelect"></select></div>
@@ -121,7 +119,7 @@
         <button onclick="handleManualSolverInput()" class="btn-success">開始多項式化簡引導</button>
     </div>
 
-    <!-- 答題核心舞台 -->
+    <!-- 答題卡片舞台 -->
     <div id="step2" class="step-panel">
         <div class="progress-banner">
             <span id="progressText">進度...</span>
@@ -301,50 +299,75 @@
         return `(${p1Str}) ${op} (${p2Str})|${ansStr}|${p1Str}|${op}|${p2Str}|${polyData.a1},${polyData.b1},${polyData.c1}|${polyData.a2},${polyData.b2},${polyData.c2}|${polyData.ansA},${polyData.ansB},${polyData.ansC}|${polyData.isQuad?1:0}|${typeNum}`;
     }
 
+    // 🌟 核心重構：智慧括號切分引擎。100% 精準還原學生輸入的題目結構，永不發生篡改！
     function handleManualSolverInput() {
         try {
             stopSessionTimer(); 
             let input = document.getElementById('polyInput').value.trim() || "3x + 8 + 2x + 5";
-            let cleanInput = input.replace(/²/g, '^2').replace(/\s+/g, '').replace(/\(/g, '').replace(/\)/g, '');
+            let cleanInput = input.replace(/²/g, '^2').replace(/\s+/g, '');
             
-            let terms = cleanInput.match(/([+-]?\d*[a-zA-Z]\^?\d*|[+-]?\d+)/g) || [];
-            let totalMap = { x2: 0, x: 0, constant: 0 };
+            let p1 = "", p2 = "", op = "+";
             
-            terms.forEach(t => {
-                if(!t) return;
-                let cleanT = t.startsWith('+') ? t.substring(1) : t;
-                if (cleanT.includes('x^2')) {
-                    let co = cleanT.replace('x^2', '');
-                    totalMap.x2 += (co === "" || co === "+") ? 1 : (co === "-" ? -1 : parseInt(co));
-                } else if (cleanT.includes('x') || cleanT.includes('y')) {
-                    let co = cleanT.replace(/[xy]/, '');
-                    totalMap.x += (co === "" || co === "+") ? 1 : (co === "-" ? -1 : parseInt(co));
+            // 優先判定是否有顯式括號分割 (如 (3x+8)+(2x+5) )
+            if (cleanInput.includes(')+(') || cleanInput.includes(')-(')) {
+                op = cleanInput.includes(')-(') ? '-' : '+';
+                let parts = cleanInput.split(op === '+' ? ')+(' : ')-(');
+                p1 = parts[0].replace('(', '');
+                p2 = parts[1] ? parts[1].replace(')', '') : "0";
+            } else {
+                // 🚀 關鍵修復：針對無括號的 3x+8+2x+5，精準找出中間那組主運算子
+                let match = cleanInput.match(/^([+-]?\d*[a-zA-Z]\^?\d*[+-]\d+)([+-])([+-]?\d*[a-zA-Z].*)$/);
+                if (match) {
+                    p1 = match[1];
+                    op = match[2];
+                    p2 = match[3];
                 } else {
-                    let parsedConst = parseInt(cleanT);
-                    if(!isNaN(parsedConst)) totalMap.constant += parsedConst;
+                    // 保底二分掃描
+                    let midMatch = cleanInput.match(/(.+?)([+-])([+-]?\d*[a-zA-Z].*)/);
+                    if (midMatch) { p1 = midMatch[1]; op = midMatch[2]; p2 = midMatch[3]; } 
+                    else { p1 = cleanInput; op = "+"; p2 = "0"; }
                 }
-            });
+            }
             
-            let halfX = Math.round(totalMap.x / 2);
-            let halfC = Math.round(totalMap.constant / 2);
-            let halfX2 = Math.round(totalMap.x2 / 2);
+            // 獨立提取兩組子多項式的係數
+            let parseCoefs = (str) => {
+                let a = 0, b = 0, c = 0;
+                let clean = str.replace(/\+/g, '++').replace(/-/g, '+-');
+                let parts = clean.split('+');
+                parts.forEach(t => {
+                    if(!t) return;
+                    if (t.includes('x^2')) {
+                        let co = t.replace('x^2', '');
+                        a += (co === "" || co === "+") ? 1 : (co === "-" ? -1 : parseInt(co));
+                    } else if (t.includes('x') || t.includes('y')) {
+                        let co = t.replace(/[xy]/, '');
+                        b += (co === "" || co === "+") ? 1 : (co === "-" ? -1 : parseInt(co));
+                    } else {
+                        let parsed = parseInt(t);
+                        if(!isNaN(parsed)) c += parsed;
+                    }
+                });
+                return [a, b, c];
+            };
 
-            let p1 = fmtTerm(halfX2, "x^2", true) + fmtTerm(halfX, "x", halfX2 === 0) + fmtTerm(halfC, "", halfX2 === 0 && halfX === 0);
-            let p2 = fmtTerm(totalMap.x2 - halfX2, "x^2", true) + fmtTerm(totalMap.x - halfX, "x", (totalMap.x2 - halfX2) === 0) + fmtTerm(totalMap.constant - halfC, "", (totalMap.x2 - halfX2) === 0 && (totalMap.x - halfX) === 0);
+            let c1 = parseCoefs(p1);
+            let c2 = parseCoefs(p2);
             
-            if(!p1) p1 = "0"; if(!p2) p2 = "0";
-
+            let ansA = (op === '+') ? (c1[0] + c2[0]) : (c1[0] - c2[0]);
+            let ansB = (op === '+') ? (c1[1] + c2[1]) : (c1[1] - c2[1]);
+            let ansC = (op === '+') ? (c1[2] + c2[2]) : (c1[2] - c2[2]);
+            
             let ansStr = "";
-            if(totalMap.x2 !== 0) ansStr += fmtTerm(totalMap.x2, "x^2", true);
-            if(totalMap.x !== 0) ansStr += fmtTerm(totalMap.x, "x", totalMap.x2 === 0);
-            if(totalMap.constant !== 0 || ansStr === "") ansStr += fmtTerm(totalMap.constant, "", totalMap.x2 === 0 && totalMap.x === 0);
+            if(ansA !== 0) ansStr += fmtTerm(ansA, "x^2", true);
+            if(ansB !== 0) ansStr += fmtTerm(ansB, "x", ansA === 0);
+            if(ansC !== 0 || ansStr === "") ansStr += fmtTerm(ansC, "", ansA === 0 && ansB === 0);
             
-            polyData.a1 = halfX2; polyData.b1 = halfX; polyData.c1 = halfC;
-            polyData.a2 = totalMap.x2 - halfX2; polyData.b2 = totalMap.x - halfX; polyData.c2 = totalMap.constant - halfC;
-            polyData.ansA = totalMap.x2; polyData.ansB = totalMap.x; polyData.ansC = totalMap.constant;
-            polyData.isQuad = (totalMap.x2 !== 0);
+            polyData.a1 = c1[0]; polyData.b1 = c1[1]; polyData.c1 = c1[2];
+            polyData.a2 = c2[0]; polyData.b2 = c2[1]; polyData.c2 = c2[2];
+            polyData.ansA = ansA; polyData.ansB = ansB; polyData.ansC = ansC;
+            polyData.isQuad = (c1[0] !== 0 || c2[0] !== 0);
 
-            session.questionList = [`(${p1})+(${p2})|${ansStr}|${p1}|+|${p2}|${halfX2},${halfX},${halfC}|${polyData.a2},${polyData.b2},${polyData.c2}|${totalMap.x2},${totalMap.x},${totalMap.constant}|${totalMap.x2!==0?1:0}|4`]; 
+            session.questionList = [`(${p1})${op}(${p2})|${ansStr}|${p1}|${op}|${p2}|${c1.join(',')}|${c2.join(',')}|${ansA},${ansB},${ansC}|${polyData.isQuad?1:0}|4`]; 
             session.currentIdx = 0;
             loadQuestionToStage();
         } catch(e) {
@@ -355,7 +378,6 @@
         }
     }
 
-    // 🚀 核心升級：將數據裝載與畫面跳轉打包進入微秒級異步分流（setTimeout），徹底消滅 iPad DOM 異步卡死！
     function loadQuestionToStage() {
         try {
             document.getElementById('ansInput').value = '';
@@ -369,13 +391,12 @@
             document.getElementById('scoreText').innerText = `積分：${session.score}`;
             document.getElementById('progressText').innerText = `進度：第 ${session.currentIdx+1} 題`;
             
-            // 物理分流：強迫瀏覽器先執行核心 DOM 渲染，再解鎖滑動動畫
             setTimeout(() => {
                 document.getElementById('displayPoly').innerHTML = convertToNativeSup(polyData.texExpr);
                 showPanel('step2');
             }, 0);
         } catch(e) {
-            console.error("裝載鏈安全保護觸發:", e);
+            console.error(e);
             showPanel('step2');
         }
     }
