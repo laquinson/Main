@@ -40,7 +40,7 @@
         button:hover { transform: translateY(-2px); opacity: 0.9; }
         .btn-success { background: #10b981; } .btn-secondary { background: #64748b; } .btn-warning { background: #f59e0b; color: #111; }
         
-        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .dashboard-grid { display: grid; grid-type-columns: 1fr 1fr; gap: 15px; display: grid; grid-template-columns: 1fr 1fr; }
         .dash-btn { border-radius: 20px; padding: 20px; color: white; cursor: pointer; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); transition: transform 0.2s; min-height: 120px; display: flex; flex-direction: column; justify-content: space-between; }
         .dash-btn:hover { transform: translateY(-4px); }
         
@@ -71,7 +71,7 @@
 </div>
 
 <div class="container" id="mainContainer">
-    <!-- 主目錄選單 -->
+    <!-- 主選單目錄 -->
     <div id="step1" class="step-panel active">
         <h2 style="text-align:left; margin-top:0;">請選擇挑戰模式</h2>
         <div class="dashboard-grid">
@@ -90,7 +90,7 @@
         </div>
     </div>
 
-    <!-- 闖關設定面版 -->
+    <!-- 闖關設定 -->
     <div id="step1_challenge" class="step-panel">
         <h2>🎮 闖關模式設定</h2>
         <div class="form-group"><label>🧭 題目難度結構：</label><select id="typeSelect"></select></div>
@@ -236,35 +236,6 @@
 
     function convertToNativeSup(str) { return str ? str.replace(/x\^2/g, "x²").replace(/x\^1/g, "x") : "0"; }
 
-    function switchSetupConfig(configMode) {
-        try {
-            session.currentMode = configMode;
-            if (configMode === 'CHALLENGE') { 
-                showPanel('step1_challenge'); 
-                toggleConditionUI(); 
-            }
-            else if (configMode === 'STATS') { 
-                let scoreDOM = document.getElementById('statsFinalScore');
-                if(scoreDOM) scoreDOM.innerText = `${session.score} 分`; 
-                showPanel('step_stats_panel'); 
-            }
-            else if (configMode === 'SOLVER') {
-                showPanel('step1_solver');
-            }
-            else if (configMode === 'REVIEW') {
-                let cachedData = localStorage.getItem("Poly_Wrong_Bank");
-                wrongQuestionBank = cachedData ? JSON.parse(cachedData) : [];
-                if (!Array.isArray(wrongQuestionBank) || wrongQuestionBank.length === 0) { 
-                    alert("🎉 目前多項式沒有任何錯題記錄！"); 
-                    return; 
-                }
-                stopSessionTimer(); session.score = 0; session.currentIdx = 0; session.questionList = [...wrongQuestionBank];
-                session.endCondition = 'COUNT'; session.totalQuestions = session.questionList.length;
-                loadQuestionToStage();
-            }
-        } catch(e) { console.error(e); }
-    }
-
     function fmtTerm(coef, variable, isFirst) {
         if (coef === 0) return "";
         let sign = coef > 0 ? (isFirst ? "" : "+") : "-";
@@ -321,7 +292,7 @@
         try {
             stopSessionTimer(); 
             let input = document.getElementById('polyInput').value.trim() || "3x + 8 + 2x + 5";
-            let cleanInput = input.replace(/²/g, '^2').replace(/\s+/g, '');
+            let cleanInput = input.replace(/²/g, '^2').replace(/\s+/g, '').replace(/\(/g, '').replace(/\)/g, '');
             
             let p1 = "", p2 = "", op = "+";
             
@@ -427,23 +398,68 @@
         return res === "" ? "0" : res;
     }
 
+    // 🌟 核心控制流修改：答對了直接前進下一題，不需要去指導黑板！
     function checkAnswer() {
         let studentAns = document.getElementById('ansInput').value.trim();
         let currentQ = session.questionList[session.currentIdx];
         
         if(UX(studentAns) === UX(polyData.ansStr)) {
             session.score++;
-            alert("🎯 完全正確！進入推導黑板進行步驟複習。");
+            alert("🎯 答對了！非常棒！");
+            
+            // 🚀 答對直通車：直接判斷是否還有下一題
+            if (session.currentMode === 'SOLVER' || session.currentIdx >= (session.totalQuestions - 1)) {
+                // 如果是自訂單題或者是最後一題，結算或回主選單
+                if (session.currentMode === 'CHALLENGE') {
+                    switchSetupConfig('STATS');
+                } else {
+                    showPanel('step1');
+                }
+            } else {
+                // 自動加載前進下一題
+                session.currentIdx++;
+                loadQuestionToStage();
+            }
         } else {
+            // ❌ 答錯了才需要前往推導黑板輔導
             alert("❌ 答案不太對喔！讓我們在黑板中一步一步推導出正確解答。");
             if (!wrongQuestionBank.includes(currentQ)) { 
                 wrongQuestionBank.push(currentQ); 
                 localStorage.setItem("Poly_Wrong_Bank", JSON.stringify(wrongQuestionBank)); 
             }
+            updateReviewCardUI();
+            showPanel('step3'); 
+            initInteractiveBlackboard();
         }
-        updateReviewCardUI();
-        showPanel('step3'); 
-        initInteractiveBlackboard();
+    }
+
+    function switchSetupConfig(configMode) {
+        try {
+            session.currentMode = configMode;
+            if (configMode === 'CHALLENGE') { 
+                showPanel('step1_challenge'); 
+                toggleConditionUI(); 
+            }
+            else if (configMode === 'STATS') { 
+                let scoreDOM = document.getElementById('statsFinalScore');
+                if(scoreDOM) scoreDOM.innerText = `${session.score} 分`; 
+                showPanel('step_stats_panel'); 
+            }
+            else if (configMode === 'SOLVER') {
+                showPanel('step1_solver');
+            }
+            else if (configMode === 'REVIEW') {
+                let cachedData = localStorage.getItem("Poly_Wrong_Bank");
+                wrongQuestionBank = cachedData ? JSON.parse(cachedData) : [];
+                if (!Array.isArray(wrongQuestionBank) || wrongQuestionBank.length === 0) { 
+                    alert("🎉 目前多項式沒有任何錯題記錄！"); 
+                    return; 
+                }
+                stopSessionTimer(); session.score = 0; session.currentIdx = 0; session.questionList = [...wrongQuestionBank];
+                session.endCondition = 'COUNT'; session.totalQuestions = session.questionList.length;
+                loadQuestionToStage();
+            }
+        } catch(e) { console.error(e); }
     }
 
     function initInteractiveBlackboard() {
@@ -481,23 +497,18 @@
         document.getElementById('interactiveHorizontalZone').innerHTML = html;
     }
 
-    // 🌟 智慧判定安全閥：阻絕包含多個項目的展開式直接判定通關，強制解鎖同類項合併！
     function verifyStep1(correctTarget1, correctTarget2) {
         try {
             let val = document.getElementById('step1Input').value.trim();
             let parsedUser = UX(val);
-            
-            // 🚀 關鍵性物理防禦：算一算加減號。如果包含 2 個以上的加減號（代表還沒合併），絕對不准判定直接通關！
             let opCount = (val.replace(/\s+/g, '').match(/[+-]/g) || []).length;
             
             if(parsedUser === correctTarget2 && opCount <= 1) {
-                // 只有當式子已經精簡到只剩一個加減號（或沒有），才判定是心算直接命中
                 document.getElementById('statusIcon1').innerText = "🎯 厲害！心算直接命中最終答案！";
                 document.getElementById('boardLine1').style.background = "rgba(16,185,129,0.2)";
                 document.getElementById('step3GuideText').innerText = "🎉 恭喜你成功破譯本題！";
                 document.getElementById('nextBtn').style.display = 'block'; 
             } else if(parsedUser === correctTarget1) {
-                // 按部就班去括號正確，順利開啟第二步
                 document.getElementById('statusIcon1').innerText = "🎯 正確！請繼續執行第二步同類項合併。";
                 document.getElementById('boardLine1').style.background = "rgba(16,185,129,0.2)";
                 
