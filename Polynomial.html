@@ -273,6 +273,7 @@
         return sign + coefStr + variable;
     }
 
+    // 🌟 核心修復：徹底解耦 generatePolynomialQuestion 的區域參數定義，阻絕 ReferenceError 鎖死
     function generatePolynomialQuestion(mode) {
         let typeNum = (mode === 'LINEAR') ? Math.floor(Math.random() * 3) + 1 : ((mode === 'QUAD') ? 4 : Math.floor(Math.random() * 4) + 1);
         let p1Str = "", p2Str = "", ansStr = "", op = "+";
@@ -298,7 +299,6 @@
             let ansA=a+d, ansB=b+e, ansC=c+f; ansStr = fmtTerm(ansA,"x^2",true) + fmtTerm(ansB,"x",ansA === 0) + fmtTerm(ansC,"",ansA === 0 && ansB === 0);
             localData = {a1:a,b1:b,c1:c, a2:d,b2:e,c2:f, ansA:ansA,ansB:ansB,ansC:ansC, isQuad:true};
         }
-        // 🛠️ 終極修復點：將原本殘留的 c1=0 徹底清洗為精準對接的 localData 物件，終結 Reference 崩潰
         return `(${p1Str}) ${op} (${p2Str})|${ansStr}|${p1Str}|${op}|${p2Str}|${localData.a1},${localData.b1},${localData.c1}|${localData.a2},${localData.b2},${localData.c2}|${localData.ansA},${localData.ansB},${localData.ansC}|${localData.isQuad?1:0}|${typeNum}`;
     }
 
@@ -322,7 +322,7 @@
         try {
             stopSessionTimer(); 
             let input = document.getElementById('polyInput').value.trim() || "3x + 8 + 2x + 5";
-            let cleanInput = input.replace(/²/g, '^2').replace(/\s+/g, '').replace(/\(/g, '').replace(/\)/g, '');
+            let cleanInput = input.replace(/²/g, '^2').replace(/\s+/g, '');
             
             let p1 = "", p2 = "", op = "+";
             
