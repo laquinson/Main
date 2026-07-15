@@ -41,7 +41,7 @@
         
         .form-group { margin-bottom: 24px; width: 100%; box-sizing: border-box; }
         label { display: block; margin-bottom: 12px; font-weight: bold; color: #fff; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
-        input[type="text"], input[type="number"], select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.9); font-size: 16px; box-sizing: border-box; color:#000; }
+        input[type="text"], input[type="number"], select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.9); font-size: 16px; box-sizing: border-box; color:#000 !important; font-weight: bold !important; }
         
         button { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; transition: transform 0.2s; margin-top: 10px; }
         button:hover { transform: translateY(-2px); opacity: 0.9; } 
@@ -120,7 +120,7 @@
     <div id="step1_solver" class="step-panel">
         <h2>🛠️ 數學有問必答 (自訂代入)</h2>
         <div class="form-group"><label>✏️ 請輸入代數公式主體：</label><input type="text" id="eqInput" placeholder="例如: 3x + 2y 或 (a+b)h/2" autocomplete="off"></div>
-        <div class="form-group"><label>🔢 指定各變數的值（以逗號隔開）：</label><input type="text" id="xValueInput" placeholder="例如: x=4, y=-3" autocomplete="off"></div>
+        <div class="form-group"><label>🔢 指定各變數的值（以逗號隔開）：</label><input type="text" id="xValueInput" placeholder="example: x=4, y=-3" autocomplete="off"></div>
         <button onclick="handleManualSolverInput()" class="btn-success">開始代入引導</button>
     </div>
 
@@ -170,17 +170,17 @@
     });
 
     function checkActiveSession() {
-        let savedRole = localStorage.getItem("Active_User_Role");
-        let savedClass = localStorage.getItem("Active_User_Class");
-        let savedSeat = localStorage.getItem("Active_User_Seat");
-        if (!savedRole) { window.location.replace("index.html"); return; }
+        let savedRole = localStorage.getItem("Active_User_Role") || "GUEST";
+        let savedClass = localStorage.getItem("Active_User_Class") || "1A";
+        let savedSeat = localStorage.getItem("Active_User_Seat") || "1";
+        
         let accountDOM = document.getElementById('topCenterAccount');
         if(accountDOM) {
             accountDOM.style.display = 'block';
             if (savedRole === "GUEST") {
                 accountDOM.innerText = `挑戰者: 訪客體驗`;
             } else {
-                userRawClass = savedClass || "1A"; userRawSeat = savedSeat || "1";
+                userRawClass = savedClass; userRawSeat = savedSeat;
                 accountDOM.innerText = `挑戰者: ${userRawClass}班${String(userRawSeat).padStart(2, '0')}號`;
             }
         }
@@ -202,7 +202,6 @@
         `;
     }
 
-    // 🎯 核心補救補強：補回原本遺漏的 UI 切換函數，並進行 try...catch 熔斷保護，消滅按鍵卡死！
     function toggleConditionUI() {
         try {
             let c = document.querySelector('input[name="endCondition"]:checked').value;
@@ -224,7 +223,7 @@
     }
 
     function handleNavigationBack() {
-        if (currentPanelId === 'step1') window.location.replace("home.html");
+        if (currentPanelId === 'step1') resetToMainMenu();
         else showPanel('step1');
     }
 
@@ -240,51 +239,51 @@
         }
     }
 
-    // 30條核心中學公式題庫引擎
     function generateSubstitutionQuestion(category, formulaIndex) {
         let randRange = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
         let randEven = (min, max) => 2 * Math.floor(Math.random() * (max/2 - min/2 + 1)) + min;
 
         if (category === 1) {
             switch(formulaIndex) {
-                case 0: { let x = randRange(2, 20); return `<div class="formula-row">📐 正方形面積公式：A = x²</div><div class="condition-row">當 邊長 x = ${x} 時，面積 A = ?</div>|${x*x}|<b>步驟 1：</b> A = ${x}²<br><b>步驟 2：</b> A = ${x*x}`; }
-                case 1: { let r = randRange(1, 15); return `<div class="formula-row">📐 正方形周長公式：C = 4r</div><div class="condition-row">當 邊長 r = ${r} 時，周長 C = ?</div>|${4*r}|<b>步驟 1：</b> C = 4 × ${r}<br><b>步驟 2：</b> C = ${4*r}`; }
-                case 2: { let d = randRange(2, 25); return `<div class="formula-row">📐 圓形直徑公式：d = 2r</div><div class="condition-row">當 半徑 r = ${d} 時，直徑 d = ?</div>|${2*d}|<b>步驟 1：</b> d = 2 × ${d}<br><b>步驟 2：</b> d = ${2*d}`; }
-                case 3: { let m = randRange(5, 50); return `<div class="formula-row">⚗️ 科學重量常數：W = 10m</div><div class="condition-row">當 質量 m = ${m} kg 時，重量 W = ?</div>|${10*m}|<b>步驟 1：</b> W = 10 × ${m}<br><b>步驟 2：</b> W = ${10*m}`; }
-                case 4: { let c = randRange(1, 30); return `<div class="formula-row">📐 正六邊形周長：P = 6c</div><div class="condition-row">當 邊長 c = ${c} 時，周長 P = ?</div>|${6*c}|<b>步驟 1：</b> P = 6 × ${c}<br><b>步驟 2：</b> P = ${6*c}`; }
-                case 5: { let r = randRange(2, 10); return `<div class="formula-row">📐 圓周長公式：C = 2πr (取 π = 3)</div><div class="condition-row">當 半徑 r = ${r} 時，圓周長 C = ?</div>|${2*3*r}|<b>步驟 1：</b> C = 2 × 3 × ${r}<br><b>步驟 2：</b> C = ${2*3*r}`; }
-                case 6: { let s = randRange(3, 12); return `<div class="formula-row">📦 正方體表面積：A = 6s²</div><div class="condition-row">當 邊長 s = ${s} 時，表面積 A = ?</div>|${6*s*s}|<b>步驟 1：</b> A = 6 × ${s}²<br><b>步驟 2：</b> A = 6 × ${s*s} = ${6*s*s}`; }
-                case 7: { let n = randRange(4, 20); return `<div class="formula-row">📐 多邊形內角和：S = 180(n - 2)</div><div class="condition-row">當 邊數 n = ${n} 時，內角和 S = ?</div>|${180*(n-2)}|<b>步驟 1：</b> S = 180 × (${n} - 2)<br><b>步驟 2：</b> S = 180 × ${n-2} = ${180*(n-2)}`; }
-                case 8: { let r = randRange(2, 10); return `<div class="formula-row">📐 圓形面積公式：A = πr² (取 π = 3)</div><div class="condition-row">當 半徑 r = ${r} 時，面積 A = ?</div>|${3*r*r}|<b>步驟 1：</b> A = 3 × ${r}²<br><b>步驟 2：</b> A = 3 × ${r*r} = ${3*r*r}`; }
-                case 9: { let s = randRange(2, 12); return `<div class="formula-row">📦 正方體體積公式：V = s³</div><div class="condition-row">當 邊長 s = ${s} 時，體積 V = ?</div>|${s*s*s}|<b>步驟 1：</b> V = ${s}³<br><b>步驟 2：</b> V = ${s*s*s}`; }
+                case 0: { let x = randRange(2, 20); return `<div class="formula-row">A = x²</div><div class="condition-row">當 邊長 x = ${x} 時，面積 A = ?</div>|${x*x}|<b>步驟 1：</b> A = ${x}²<br><b>步驟 2：</b> A = ${x*x}`; }
+                case 1: { let r = randRange(1, 15); return `<div class="formula-row">C = 4r</div><div class="condition-row">當 邊長 r = ${r} 時，周長 C = ?</div>|${4*r}|<b>步驟 1：</b> C = 4 × ${r}<br><b>步驟 2：</b> C = ${4*r}`; }
+                case 2: { let d = randRange(2, 25); return `<div class="formula-row">d = 2r</div><div class="condition-row">當 半徑 r = ${d} 時，直徑 d = ?</div>|${2*d}|<b>步驟 1：</b> d = 2 × ${d}<br><b>步驟 2：</b> d = ${2*d}`; }
+                case 3: { let m = randRange(5, 50); return `<div class="formula-row">W = 10m</div><div class="condition-row">當 質量 m = ${m} kg 時，重量 W = ?</div>|${10*m}|<b>步驟 1：</b> W = 10 × ${m}<br><b>步驟 2：</b> W = ${10*m}`; }
+                case 4: { let c = randRange(1, 30); return `<div class="formula-row">P = 6c</div><div class="condition-row">當 邊長 c = ${c} 時，周長 P = ?</div>|${6*c}|<b>步驟 1：</b> P = 6 × ${c}<br><b>步驟 2：</b> P = ${6*c}`; }
+                case 5: { let r = randRange(2, 10); return `<div class="formula-row">C = 2πr (取 π = 3)</div><div class="condition-row">當 半徑 r = ${r} 時，圓周長 C = ?</div>|${2*3*r}|<b>步驟 1：</b> C = 2 × 3 × ${r}<br><b>步驟 2：</b> C = ${2*3*r}`; }
+                case 6: { let s = randRange(3, 12); return `<div class="formula-row">A = 6s²</div><div class="condition-row">當 邊長 s = ${s} 時，表面積 A = ?</div>|${6*s*s}|<b>步驟 1：</b> A = 6 × ${s}²<br><b>步驟 2：</b> A = 6 × ${s*s} = ${6*s*s}`; }
+                case 7: { let n = randRange(4, 20); return `<div class="formula-row">S = 180(n - 2)</div><div class="condition-row">當 邊數 n = ${n} 時，內角和 S = ?</div>|${180*(n-2)}|<b>步驟 1：</b> S = 180 × (${n} - 2)<br><b>步驟 2：</b> S = 180 × ${n-2} = ${180*(n-2)}`; }
+                case 8: { let r = randRange(2, 10); return `<div class="formula-row">A = πr² (取 π = 3)</div><div class="condition-row">當 半徑 r = ${r} 時，面積 A = ?</div>|${3*r*r}|<b>步驟 1：</b> A = 3 × ${r}²<br><b>步驟 2：</b> A = 3 × ${r*r} = ${3*r*r}`; }
+                case 9: { let s = randRange(2, 12); return `<div class="formula-row">V = s³</div><div class="condition-row">當 邊長 s = ${s} 時，體積 V = ?</div>|${s*s*s}|<b>步驟 1：</b> V = ${s}³<br><b>步驟 2：</b> V = ${s*s*s}`; }
             }
         }
         else if (category === 2) {
             switch(formulaIndex) {
-                case 0: { let a = randRange(2, 15), b = randRange(2, 12); return `<div class="formula-row">📐 矩形面積公式：A = ab</div><div class="condition-row">當 長 a = ${a}, 寬 b = ${b} 時，面積 A = ?</div>|${a*b}|<b>步驟 1：</b> A = ${a} × ${b}<br><b>步驟 2：</b> A = ${a*b}`; }
-                case 1: { let v = randRange(10, 100), t = randRange(2, 10); return `<div class="formula-row">🏃 速度公式：v = s / t</div><div class="condition-row">當 距離 s = ${v*t}, 時間 t = ${t} 時，平均速度 v = ?</div>|${v}|<b>步驟 1：</b> v = ${v*t} / ${t}<br><b>步驟 2：</b> v = ${v}`; }
-                case 2: { let m = randRange(20, 200), v = randRange(2, 10); return `<div class="formula-row">⚗️ 密度公式：ρ = m / v</div><div class="condition-row">當 質量 m = ${m*v}, 體積 v = ${v} 時，密度 ρ = ?</div>|${m}|<b>步驟 1：</b> ρ = ${m*v} / ${v}<br><b>步驟 2：</b> ρ = ${m}`; }
-                case 3: { let i = randRange(2, 10), r = randRange(3, 20); return `<div class="formula-row">⚡ 歐姆定律：V = IR</div><div class="condition-row">當 電流 I = ${i}, 電阻 R = ${r} 時，電壓 V = ?</div>|${i*r}|<b>步驟 1：</b> V = ${i} × ${r}<br><b>步驟 2：</b> V = ${i*r}`; }
-                case 4: { let b = randRange(3, 15), h = randEven(2, 12); let frac=`<div class="math-fraction"><div class="fraction-numerator">b × h</div><div class="fraction-denominator">2</div></div>`; return `<div class="formula-row">📐 三角形面積：A = ${frac}</div><div class="condition-row">當 底 b = ${b}, 高 h = ${h} 時，面積 A = ?</div>|${(b*h)/2}|<b>步驟 1：</b> A = (${b} × ${h}) / 2<br><b>步驟 2：</b> A = ${b*h} / 2 = ${(b*h)/2}`; }
-                case 5: { let w = randRange(5, 30), d = randRange(2, 10); return `<div class="formula-row">⚖️ 槓桿力矩公式：M = Wd</div><div class="condition-row">當 重量 W = ${w}, 距離 d = ${d} 時，力矩 M = ?</div>|${w*d}|<b>步驟 1：</b> M = ${w} × ${d}<br><b>步驟 2：</b> M = ${w*d}`; }
-                case 6: { let x = randRange(5, 20), y = randRange(2, 15); return `<div class="formula-row">代數式求值：z = 3x - 2y</div><div class="condition-row">當 x = ${x}, y = ${y} 時，z = ?</div>|${3*x-2*y}|<b>步驟 1：</b> z = 3 × ${x} - 2 × ${y}<br><b>步驟 2：</b> z = ${3*x} - ${2*y} = ${3*x-2*y}`; }
-                case 7: { let r = randRange(2, 6), h = randRange(2, 10); return `<div class="formula-row">⚗️ 圓柱體曲面面積：A = 2πrh (取 π = 3)</div><div class="condition-row">當 半徑 r = ${r}, 高 h = ${h} 時，曲面面積 A = ?</div>|${2*3*r*h}|<b>步驟 1：</b> A = 2 × 3 × ${r} × ${h}<br><b>步驟 2：</b> A = ${6*r} × ${h} = ${2*3*r*h}`; }
-                case 8: { let a = randRange(5, 25), b = randRange(2, 10); return `<div class="formula-row">代數式求值：k = a² + b</div><div class="condition-row">當 a = ${a}, b = ${b} 時，k = ?</div>|${a*a+b}|<b>步驟 1：</b> k = ${a}² + ${b}<br><b>步驟 2：</b> k = ${a*a} + ${b} = ${a*a+b}`; }
-                case 9: { let f = randRange(20, 100), a = randRange(2, 5); return `<div class="formula-row">💨 壓強公式：P = F / A</div><div class="condition-row">當 垂直壓力 F = ${f*a}, 受力面積 A = ${a} 時，壓強 P = ?</div>|${f}|<b>步驟 1：</b> P = ${f*a} / ${a}<br><b>步驟 2：</b> P = ${f}`; }
+                case 0: { let a = randRange(2, 15), b = randRange(2, 12); return `<div class="formula-row">A = ab</div><div class="condition-row">當 長 a = ${a}, 寬 b = ${b} 時，面積 A = ?</div>|${a*b}|<b>步驟 1：</b> A = ${a} × ${b}<br><b>步驟 2：</b> A = ${a*b}`; }
+                case 1: { let v = randRange(10, 100), t = randRange(2, 10); return `<div class="formula-row">v = s / t</div><div class="condition-row">當 距離 s = ${v*t}, 時間 t = ${t} 時，平均速度 v = ?</div>|${v}|<b>步驟 1：</b> v = ${v*t} / ${t}<br><b>步驟 2：</b> v = ${v}`; }
+                case 2: { let m = randRange(20, 200), v = randRange(2, 10); return `<div class="formula-row">ρ = m / v</div><div class="condition-row">當 質量 m = ${m*v}, 體積 v = ${v} 時，密度 ρ = ?</div>|${m}|<b>步驟 1：</b> ρ = ${m*v} / ${v}<br><b>步驟 2：</b> ρ = ${m}`; }
+                case 3: { let i = randRange(2, 10), r = randRange(3, 20); return `<div class="formula-row">V = IR</div><div class="condition-row">當 電流 I = ${i}, 電阻 R = ${r} 時，電壓 V = ?</div>|${i*r}|<b>步驟 1：</b> V = ${i} × ${r}<br><b>步驟 2：</b> V = ${i*r}`; }
+                case 4: { let b = randRange(3, 15), h = randEven(2, 12); let frac=`<div class="math-fraction"><div class="fraction-numerator">b × h</div><div class="fraction-denominator">2</div></div>`; return `<div class="formula-row">A = ${frac}</div><div class="condition-row">當 底 b = ${b}, 高 h = ${h} 時，面積 A = ?</div>|${(b*h)/2}|<b>步驟 1：</b> A = (${b} × ${h}) / 2<br><b>步驟 2：</b> A = ${b*h} / 2 = ${(b*h)/2}`; }
+                case 5: { let w = randRange(5, 30), d = randRange(2, 10); return `<div class="formula-row">M = Wd</div><div class="condition-row">當 重量 W = ${w}, 距離 d = ${d} 時，力矩 M = ?</div>|${w*d}|<b>步驟 1：</b> M = ${w} × ${d}<br><b>步驟 2：</b> M = ${w*d}`; }
+                case 6: { let x = randRange(5, 20), y = randRange(2, 15); return `<div class="formula-row">z = 3x - 2y</div><div class="condition-row">當 x = ${x}, y = ${y} 時，z = ?</div>|${3*x-2*y}|<b>步驟 1：</b> z = 3 × ${x} - 2 × ${y}<br><b>步驟 2：</b> z = ${3*x} - ${2*y} = ${3*x-2*y}`; }
+                case 7: { let r = randRange(2, 6), h = randRange(2, 10); return `<div class="formula-row">A = 2πrh (取 π = 3)</div><div class="condition-row">當 半徑 r = ${r}, 高 h = ${h} 時，曲面面積 A = ?</div>|${2*3*r*h}|<b>步驟 1：</b> A = 2 × 3 × ${r} × ${h}<br><b>步驟 2：</b> A = ${6*r} × ${h} = ${2*3*r*h}`; }
+                case 8: { let a = randRange(5, 25), b = randRange(2, 10); return `<div class="formula-row">k = a² + b</div><div class="condition-row">當 a = ${a}, b = ${b} 時，k = ?</div>|${a*a+b}|<b>步驟 1：</b> k = ${a}² + ${b}<br><b>步驟 2：</b> k = ${a*a} + ${b} = ${a*a+b}`; }
+                case 9: { let f = randRange(20, 100), a = randRange(2, 5); return `<div class="formula-row">P = F / A</div><div class="condition-row">當 垂直壓力 F = ${f*a}, 受力面積 A = ${a} 時，壓強 P = ?</div>|${f}|<b>步驟 1：</b> P = ${f*a} / ${a}<br><b>步驟 2：</b> P = ${f}`; }
             }
         }
         else {
             switch(formulaIndex) {
-                case 0: { let a=randRange(2,10), b=randRange(2,10), h=randEven(2,10); let frac=`<div class="math-fraction"><div class="fraction-numerator">(a + b) × h</div><div class="fraction-denominator">2</div></div>`; return `<div class="formula-row">📐 梯形面積公式：A = ${frac}</div><div class="condition-row">當 上底 a = ${a}, 下底 b = ${b}, 高 h = ${h} 時，面積 A = ?</div>|${((a+b)*h)/2}|<b>步驟 1：</b> A = (${a} + ${b}) × ${h} / 2<br><b>步驟 2：</b> A = ${a+b} × ${h} / 2 = ${((a+b)*h)/2}`; }
-                case 1: { let p=100*randRange(2,10), r=randRange(2,6), t=randRange(1,3); let frac=`<div class="math-fraction"><div class="fraction-numerator">P × r × t</div><div class="fraction-denominator">100</div></div>`; return `<div class="formula-row">💰 單利息公式：A = P + ${frac}</div><div class="condition-row">當 P = ${p}, r = ${r}, t = ${t} 時，本利和 A = ?</div>|${p+(p*r*t)/100}|<b>步驟 1：</b> A = ${p} + (${p} × ${r} × ${t}) / 100<br><b>步驟 2：</b> A = ${p} + ${(p*r*t)/100} = ${p+(p*r*t)/100}`; }
-                case 2: { let u=randRange(2,8), t=randRange(2,5), a=randEven(2,6); let frac=`<div class="math-fraction"><div class="fraction-numerator">a × t²</div><div class="fraction-denominator">2</div></div>`; return `<div class="formula-row">🏃 物理位移公式：s = ut + ${frac}</div><div class="condition-row">當 u = ${u}, t = ${t}, a = ${a} 時，位移 s = ?</div>|${u*t+(a*t*t)/2}|<b>步驟 1：</b> s = (${u} × ${t}) + (${a} × ${t}²) / 2<br><b>步驟 2：</b> s = ${u*t} + ${(a*t*t)/2} = ${u*t+(a*t*t)/2}`; }
-                case 3: { let x=randRange(2,6), y=randRange(1,5), z=randRange(2,6); return `<div class="formula-row">代數多變數求值：w = 2x + 3y - z</div><div class="condition-row">當 x = ${x}, y = ${y}, z = ${z} 時，w = ?</div>|${2*x+3*y-z}|<b>步驟 1：</b> w = 2 × ${x} + 3 × ${y} - ${z}<br><b>步驟 2：</b> w = ${2*x} + ${3*y} - ${z} = ${2*x+3*y-z}`; }
-                case 4: { let x=randRange(3,8), y=randRange(1,4), z=randRange(1,5); return `<div class="formula-row">代數乘積求值：p = xyz</div><div class="condition-row">當 x = ${x}, y = ${y}, z = ${z} 時，乘積 p = ?</div>|${x*y*z}|<b>步驟 1：</b> p = ${x} × ${y} × ${z}<br><b>步驟 2：</b> p = ${x*y*z}`; }
-                case 5: { let a=randRange(2,6), b=randRange(2,6), c=randRange(2,6); return `<div class="formula-row">📐 三角柱體表面積：S = ab + 3bc</div><div class="condition-row">當 a = ${a}, b = ${b}, c = ${c} 時，表面積 S = ?</div>|${a*b+3*b*c}|<b>步驟 1：</b> S = (${a} × ${b}) + (3 × ${b} × ${c})<br><b>步驟 2：</b> S = ${a*b} + ${3*b*c} = ${a*b+3*b*c}`; }
-                case 6: { let x=randRange(1,5), y=randRange(2,6), z=randRange(1,4); return `<div class="formula-row">代數多項式求值：m = x² + 2y - z³</div><div class="condition-row">當 x = ${x}, y = ${y}, z = ${z} 時，m = ?</div>|${x*x+2*y-z*z*z}|<b>步驟 1：</b> m = ${x}² + 2 × ${y} - ${z}³<br><b>步驟 2：</b> m = ${x*x} + ${2*y} - ${z*z*z} = ${x*x+2*y-z*z*z}`; }
-                case 7: { let a=randRange(2,6), b=randRange(1,5), c=randRange(1,5), d=randRange(1,5); return `<div class="formula-row">四變數加總求值：T = a + b + c + d</div><div class="condition-row">當 a = ${a}, b = ${b}, c = ${c}, d = ${d} 時，總和 T = ?</div>|${a+b+c+d}|<b>步驟 1：</b> T = ${a} + ${b} + ${c} + ${d}<br><b>步驟 2：</b> T = ${a+b+c+d}`; }
-                case 8: { let bArea=randRange(5,20), h=randRange(2,8); let frac=`<div class="math-fraction"><div class="fraction-numerator">A × h</div><div class="fraction-denominator">3</div></div>`; return `<div class="formula-row">📦 棱錐體體積公式：V = ${frac}</div><div class="condition-row">當 底面積 A = ${bArea}, 高 h = ${h} 時，V = ?</div>|${Math.round((bArea*h)/3)}|<b>步驟 1：</b> V = (${bArea} × ${h}) / 3<br><b>步驟 2：</b> V = ${bArea*h} / 3 = ${Math.round((bArea*h)/3)}`; }
-                case 9: { let x=randRange(2,10), y=randRange(1,5); let frac=`<div class="math-fraction"><div class="fraction-numerator">x + y</div><div class="fraction-denominator">x - y</div></div>`; return `<div class="formula-row">📐 分式求值：R = ${frac}</div><div class="condition-row">當 x = ${x+y}, y = ${y} 時，R = ?</div>|${Math.round((x+y+y)/x)}|<b>步驟 1：</b> R = (${x+y} + ${y}) / (${x+y} - ${y})<br><b>步驟 2：</b> R = ${x+y+y} / ${x} = ${Math.round((x+y+y)/x)}`; }
+                case 0: { let a=randRange(2,10), b=randRange(2,10), h=randEven(2,10); let frac=`<div class="math-fraction"><div class="fraction-numerator">(a + b) × h</div><div class="fraction-denominator">2</div></div>`; return `<div class="formula-row">A = ${frac}</div><div class="condition-row">當 上底 a = ${a}, 下底 b = ${b}, 高 h = ${h} 時，面積 A = ?</div>|${((a+b)*h)/2}|<b>步驟 1：</b> A = (${a} + ${b}) × ${h} / 2<br><b>步驟 2：</b> A = ${a+b} × ${h} / 2 = ${((a+b)*h)/2}`; }
+                case 1: { let p=100*randRange(2,10), r=randRange(2,6), t=randRange(1,3); let frac=`<div class="math-fraction"><div class="fraction-numerator">P × r × t</div><div class="fraction-denominator">100</div></div>`; return `<div class="formula-row">A = P + ${frac}</div><div class="condition-row">當 P = ${p}, r = ${r}, t = ${t} 時，本利和 A = ?</div>|${p+(p*r*t)/100}|<b>步驟 1：</b> A = ${p} + (${p} × ${r} × ${t}) / 100<br><b>步驟 2：</b> A = ${p} + ${(p*r*t)/100} = ${p+(p*r*t)/100}`; }
+                case 2: { let u=randRange(2,8), t=randRange(2,5), a=randEven(2,6); let frac=`<div class="math-fraction"><div class="fraction-numerator">a × t²</div><div class="fraction-denominator">2</div></div>`; return `<div class="formula-row">s = ut + ${frac}</div><div class="condition-row">當 u = ${u}, t = ${t}, a = ${a} 時，位移 s = ?</div>|${u*t+(a*t*t)/2}|<b>步驟 1：</b> s = (${u} × ${t}) + (${a} × ${t}²) / 2<br><b>步驟 2：</b> s = ${u*t} + ${(a*t*t)/2} = ${u*t+(a*t*t)/2}`; }
+                case 3: { let x=randRange(2,6), y=randRange(1,5), z=randRange(2,6); return `<div class="formula-row">w = 2x + 3y - z</div><div class="condition-row">當 x = ${x}, y = ${y}, z = ${z} 時，w = ?</div>|${2*x+3*y-z}|<b>步驟 1：</b> w = 2 × ${x} + 3 × ${y} - ${z}<br><b>步驟 2：</b> w = ${2*x} + ${3*y} - ${z} = ${2*x+3*y-z}`; }
+                case 4: { let x=randRange(3,8), y=randRange(1,4), z=randRange(1,5); return `<div class="formula-row">p = xyz</div><div class="condition-row">當 x = ${x}, y = ${y}, z = ${z} 時，乘積 p = ?</div>|${x*y*z}|<b>步驟 1：</b> p = ${x} × ${y} × ${z}<br><b>步驟 2：</b> p = ${x*y*z}`; }
+                case 5: { let a=randRange(2,6), b=randRange(2,6), c=randRange(2,6); return `<div class="formula-row">S = ab + 3bc</div><div class="condition-row">當 a = ${a}, b = ${b}, c = ${c} 時，表面積 S = ?</div>|${a*b+3*b*c}|<b>步驟 1：</b> S = (${a} × ${b}) + (3 × ${b} × ${c})<br><b>步驟 2：</b> S = ${a*b} + ${3*b*c} = ${a*b+3*b*c}`; }
+                case 6: { let x=randRange(1,5), y=randRange(2,6), z=randRange(1,4); return `<div class="formula-row">m = x² + 2y - z³</div><div class="condition-row">當 x = ${x}, y = ${y}, z = ${z} 時，m = ?</div>|${x*x+2*y-z*z*z}|<b>步驟 1：</b> m = ${x}² + 2 × ${y} - ${z}³<br><b>步驟 2：</b> m = ${x*x} + ${2*y} - ${z*z*z} = ${x*x+2*y-z*z*z}`; }
+                case 7: { let a=randRange(1,5), b=randRange(1,5), c=randRange(1,5), d=randRange(1,5); return `<div class="formula-row">T = a + b + c + d</div><div class="condition-row">當 a = ${a}, b = ${b}, c = ${c}, d = ${d} 時，總和 T = ?</div>|${a+b+c+d}|<b>步驟 1：</b> T = ${a} + ${b} + ${c} + ${d}<br><b>步驟 2：</b> T = ${a+b+c+d}`; }
+                // 🛡️ 常數防呆清洗：強制作答防禦優化，確保分母絕對不為 0 觸發 NaN 異常
+                case 8: { let bArea=randRange(5,20), h=randRange(3,9); let frac=`<div class="math-fraction"><div class="fraction-numerator">A × h</div><div class="fraction-denominator">3</div></div>`; return `<div class="formula-row">V = ${frac}</div><div class="condition-row">當 底面積 A = ${bArea}, 高 h = ${h} 時，V = ?</div>|${Math.round((bArea*h)/3)}|<b>步驟 1：</b> V = (${bArea} × ${h}) / 3<br><b>步驟 2：</b> V = ${bArea*h} / 3 = ${Math.round((bArea*h)/3)}`; }
+                case 9: { let x=randRange(2,10), y=randRange(1,5); if(x === y) x += 2; let frac=`<div class="math-fraction"><div class="fraction-numerator">x + y</div><div class="fraction-denominator">x - y</div></div>`; return `<div class="formula-row">R = ${frac}</div><div class="condition-row">當 x = ${x+y}, y = ${y} 時，R = ?</div>|${Math.round((x+y+y)/x)}|<b>步驟 1：</b> R = (${x+y} + ${y}) / (${x+y} - ${y})<br><b>步驟 2：</b> R = ${x+y+y} / ${x} = ${Math.round((x+y+y)/x)}`; }
             }
         }
     }
@@ -345,6 +344,7 @@
         showPanel('step2');
     }
 
+    // 🌟 核心防禦：排除 "引導模式" 參與數值轉換導致的 NaN TypeError 卡死死鎖
     function checkFirstAnswer() {
         let input = document.getElementById('ansInput').value.trim();
         let currentQ = session.questionList[session.currentIdx];
@@ -376,7 +376,10 @@
             }
         }
         updateReviewMenuUI();
-        document.getElementById('interactiveStageBox').innerHTML = `解題總結：${parseFloat(currentAns).toFixed(1).replace('.0','')}`;
+        
+        // 安全沙盒校正展示欄位
+        let summaryDisplay = currentAns === "引導模式" ? "自訂引導完成" : parseFloat(currentAns).toFixed(1).replace('.0','');
+        document.getElementById('interactiveStageBox').innerHTML = `解題總結：${summaryDisplay}`;
         document.getElementById('mathStepBox').innerHTML = currentExplanation;
         showPanel('step3');
     }
