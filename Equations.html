@@ -553,10 +553,20 @@
         let uOp = document.getElementById('rightCombineInput').value.replace(/\s+/g,'');
         if(uOp === eqData.opStep2 || (eqData.opStep2==="/1" && uOp==="/1")) {
             alert("🎯 等量乘除成功！");
-            document.getElementById('interactiveStageBox').innerHTML = `⚖️ 平衡鎖定：x = ${eqData.ansStr}`;
-            document.getElementById('stageCombineArea').style.display="none"; document.getElementById('stageFinalArea').style.display="block";
-            document.getElementById('finalAnsInput').value = ""; renderMathSteps(3);
-        } else { session.wrongAttemptsInTeaching++; alert("❌ 失衡！請正確處理未知數前的係數。"); checkTeachingWrongCounter('teachingWrongArea2'); }
+            
+            // 🎯 核心修改：動態將 /3 轉成教科書寫法 ÷ 3，並顯示未計算的除式
+            let displayOp = eqData.opStep2.replace('/', ' ÷ ').replace('*', ' × ');
+            document.getElementById('interactiveStageBox').innerHTML = `<span style="white-space: nowrap;">⚖️ 準備求值：x = ${eqData.midRight}${displayOp}</span>`;
+            
+            document.getElementById('stageCombineArea').style.display="none"; 
+            document.getElementById('stageFinalArea').style.display="block";
+            document.getElementById('finalAnsInput').value = ""; 
+            renderMathSteps(3);
+        } else { 
+            session.wrongAttemptsInTeaching++; 
+            alert("❌ 失衡！請正確處理未知數前的係數。"); 
+            checkTeachingWrongCounter('teachingWrongArea2'); 
+        }
     }
 
     function executeFinal() {
@@ -575,9 +585,12 @@
     }
     function renderMathSteps(code) {
         const box = document.getElementById('mathStepBox');
+        let displayOp = eqData.opStep2.replace('/', ' ÷ ').replace('*', ' × ');
+        
         let html = `<div class="step-line ${code===1?'active-line':''}">[初始天秤狀態]：${eqData.leftExpr} = ${eqData.rightExpr}</div>`;
         if(code>=2) html+=`<div class="step-line ${code===2?'active-line':''}">[等量加減化簡] (兩邊同時 ${eqData.opStep1})<br>&rArr; ${eqData.midLeft} = ${eqData.midRight}</div>`;
-        if(code>=3) html+=`<div class="step-line ${code===3?'active-line':''}">[等量乘除孤立] (兩邊同時 ${eqData.opStep2})<br>&rArr; x = ${eqData.ansStr}</div>`;
+        // 🎯 核心修改：黑板同步顯示過渡除式，而非直接跳答案
+        if(code>=3) html+=`<div class="step-line ${code===3?'active-line':''}">[等量乘除孤立] (兩邊同時 ${eqData.opStep2})<br>&rArr; x = ${eqData.midRight}${displayOp}</div>`;
         if(code>=4) html+=`<div class='step-line active-line'>[天秤最終守恆解] <br>&rArr; 答案 x = ${eqData.ansStr} 🎯</div>`;
         box.innerHTML = html;
     }
