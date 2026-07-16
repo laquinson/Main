@@ -222,7 +222,7 @@
             </div>
             <div class="progress-bar-container"><div id="progressBarFill" class="progress-bar-fill"></div></div>
         </div>
-        <h2>請解出未知數的值使天秤維持平衡</h2>
+        <h2 id="step2Title">請解出未知數的值使天秤維持平衡</h2>
         <div class="stage-box" id="displayEq">方程式載入中...</div>
         
         <div id="studentAnswerFormContainer">
@@ -448,7 +448,11 @@
         if(!parseEquationStructure(expr)) { alert("天秤數據初始化失敗！"); resetToMainMenu(false); return; }
         if(session.currentMode==='CHALLENGE') { cacheStorage.EQ.stats[session.currentTypeNum].total++; cloudSaveData(); }
         
-        document.getElementById('step2Title').innerText = (session.currentMode === 'REVIEW') ? "👹 魔王錯題重溫挑戰" : "請解出未知數的值使天秤維持平衡";
+        const step2Title = document.getElementById('step2Title');
+        if(step2Title) {
+            step2Title.innerText = (session.currentMode === 'REVIEW') ? "👹 魔王錯題重溫挑戰" : "請解出未知數的值使天秤維持平衡";
+        }
+        
         document.getElementById('scoreText').innerText = `目前積分: ${session.score} 分`;
         document.getElementById('displayEq').innerHTML = `
             <div style="font-size: 20px; color:#cbd5e1; margin-bottom:10px;">📊 題型：${eqData.formulaTitle}</div>
@@ -475,11 +479,6 @@
             eqData.midLeft = coeff === 1 ? "x" : `${coeff}x`; eqData.midRight = String(coeff * parseInt(eqData.ansStr));
             return true;
         } catch(e) { console.error(e); return false; }
-    }
-
-    function generateEquation(typeCode) {
-        let t = typeCode === 'MIX' ? ['1', '2', '3', '4'][Math.floor(Math.random() * 4)] : typeCode;
-        return EQUATION_BANK[t].generate();
     }
 
     function checkFirstAnswer() {
@@ -556,7 +555,7 @@
 
     function executeFinal() {
         if(document.getElementById('finalAnsInput').value.replace(/\s+/g,'') === eqData.ansStr) {
-            document.getElementById('interactiveStageBox').innerHTML=`⚖️ 破譯守恆成功：x = <span style='color:#00ff00;'>${eqData.ansStr}</span>`;
+            document.getElementById('interactiveStageBox').innerHTML = `⚖️ 破譯守恆成功：x = <span style='color:#00ff00;'>${eqData.ansStr}</span>`;
             document.getElementById('stageFinalArea').style.display="none"; document.getElementById('nextBtn').style.display="block";
             setupNextButtonLabel(); renderMathSteps(4);
         } else { session.wrongAttemptsInTeaching++; alert("最終數值不對！"); checkTeachingWrongCounter('teachingWrongArea3'); }
