@@ -366,12 +366,17 @@
         };
     }
 
+    // 確保 showPanel 絕對可見
     function showPanel(id) { 
-        document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active')); 
-        document.getElementById(id).classList.add('active'); 
-        let navLeft = document.getElementById('topLeftNav');
-        if (navLeft) navLeft.style.display = (id === 'step1') ? 'none' : 'block'; 
-        document.getElementById('mainContainer').style.display = 'block';
+        console.log("切換面板至: " + id);
+        document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active')); 
+        const target = document.getElementById(id);
+        if(target) {
+            target.classList.add('active');
+            document.getElementById('mainContainer').style.display = 'block';
+            let navLeft = document.getElementById('topLeftNav');
+            if (navLeft) navLeft.style.display = (id === 'step1') ? 'none' : 'block'; 
+        }
     }
 
     function switchSetupConfig(mode) {
@@ -383,30 +388,40 @@
     }
 
     function initChallengeSession() {
-        let selectedType = document.getElementById('typeSelect').value;
-        let condition = document.querySelector('input[name="endCondition"]:checked').value;
-        session.currentMode = 'CHALLENGE'; session.selectedType = selectedType; session.endCondition = condition; session.currentIdx = 0; session.score = 0; session.questionList = [];
-        document.getElementById('timeModeResultSummary').style.display = 'none';
+        // 1. 強制確保 DOM 狀態正確
+        const typeSelect = document.getElementById('typeSelect');
+        const condition = document.querySelector('input[name="endCondition"]:checked').value;
+        const total = parseInt(document.getElementById('totalQuestionsInput').value) || 5;
+        
+        session.currentMode = 'CHALLENGE';
+        session.selectedType = typeSelect ? typeSelect.value : 'MIX';
+        session.endCondition = condition;
+        session.currentIdx = 0;
+        session.score = 0;
+        session.questionList = [];
 
+        // 2. 數據生成與安全初始化
         if (condition === 'COUNT') {
-            stopSessionTimer(); 
-            session.totalQuestions = parseInt(document.getElementById('totalQuestionsInput').value) || 5;
-            for (let i = 0; i < session.totalQuestions; i++) session.questionList.push(generateEquation(selectedType));
-        } else if (condition === 'TARGET_SCORE') {
-            stopSessionTimer(); 
-            session.targetScore = parseInt(document.getElementById('targetScoreInput').value) || 5;
-            session.totalQuestions = 1; // 🎯 修正核心：防止分母為0崩潰
-            session.questionList.push(generateEquation(selectedType));
+            stopSessionTimer();
+            session.totalQuestions = total;
+            for (let i = 0; i < total; i++) {
+                session.questionList.push(generateEquation(session.selectedType));
+            }
         } else {
-            let sec = parseInt(document.getElementById('timeLimitSelect').value) || 300;
-            session.timeLimitSetting = sec; 
-            session.totalQuestions = 1; // 🎯 修正核心：防止分母為0崩潰
-            session.questionList.push(generateEquation(selectedType)); 
-            startSessionTimer(sec);
+            session.totalQuestions = 999; // 非固定題數模式預設大值
+            session.questionList.push(generateEquation(session.selectedType));
+            if (condition === 'TIME_LIMIT') {
+                let sec = parseInt(document.getElementById('timeLimitSelect').value) || 300;
+                session.timeLimitSetting = sec;
+                startSessionTimer(sec);
+            }
         }
+
+        // 3. 強制顯示作答頁面，繞過所有可能的渲染卡點
+        console.log("初始化完成，準備顯示 stage2");
         loadEquationToStage();
     }
-
+    
     function initReviewSession() {
         stopSessionTimer(); wrongQuestionBank = [...cacheStorage.EQ.wrongBook]; if (wrongQuestionBank.length === 0) return;
         session.currentMode = 'REVIEW'; session.currentIdx = 0; session.totalQuestions = wrongQuestionBank.length; session.questionList = wrongQuestionBank;
@@ -415,23 +430,39 @@
     }
 
     function loadEquationToStage() {
-        session.wrongAttemptsThisQuestion = 0; session.wrongAttemptsInTeaching = 0; session.hasAddedToWrongBookThisQuestion = false;
-        document.getElementById('initialFeedbackArea').innerHTML = '';
-        document.getElementById('ansInput').disabled = false; document.getElementById('ansInput').value = '';
-        document.getElementById('retryInputWrapper').style.display = 'none'; document.getElementById('ansRetryInput').value = '';
-        document.getElementById('teachingWrongArea1').innerHTML = ''; document.getElementById('teachingWrongArea2').innerHTML = ''; document.getElementById('teachingWrongArea3').innerHTML = '';
-
-        let expr = session.questionList[session.currentIdx];
-        if(!parseEquationStructure(expr)) { alert("天秤數據初始化失敗！"); resetToMainMenu(false); return; }
-        if(session.currentMode==='CHALLENGE') { cacheStorage.EQ.stats[session.currentTypeNum].total++; cloudSaveData(); }
+        // 確保 DOM 可見性
+        document.getElementById('mainContainer').style.display = 'block';
         
+        session.wrongAttemptsThisQuestion = 0;
+        session.wrongAttemptsInTeaching = 0;
+        session.hasAddedToWrongBookThisQuestion = false;
+        
+        // 數據解析
+        let expr = session.questionList[session.currentIdx];
+        if(!parseEquationStructure(expr)) { 
+            alert("題目解析失敗，自動跳過此題");
+            advanceQuestion();
+            return;
+        }
+        
+        if(session.currentMode === 'CHALLENGE') {
+            cacheStorage.EQ.stats[session.currentTypeNum].total++;
+            cloudSaveData();
+        }
+        
+        document.getElementById('step2Title').innerText = (session.currentMode === 'REVIEW') ? "👹 魔王錯題重溫挑戰" : "請依條件計算求值";
         document.getElementById('scoreText').innerText = `目前積分: ${session.score} 分`;
+        
+        // 渲染題目
         document.getElementById('displayEq').innerHTML = `
             <div style="font-size: 20px; color:#cbd5e1; margin-bottom:10px;">📊 題型：${eqData.formulaTitle}</div>
             <div style="font-size: 32px; color:#fff; letter-spacing:1px;">${eqData.leftExpr} = ${eqData.rightExpr}</div>
-            <div class="balance-graphic">⚖️ [左盤木盒] 放置了 <b>${eqData.leftExpr}</b> ｜ [右盤砝碼] 放置了 <b>${eqData.rightExpr}</b></div>
+            <div class="balance-graphic">⚖️ [左盤] ${eqData.leftExpr} ｜ [右盤] ${eqData.rightExpr}</div>
         `;
-        updateProgressBarUI(); showPanel('step2');
+        
+        // 強制切換至作答面板
+        showPanel('step2');
+        updateProgressBarUI();
     }
 
     function parseEquationStructure(str) {
