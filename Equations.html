@@ -141,6 +141,7 @@
     <button class="top-nav-btn logout-btn-text" onclick="logoutSession()" title="登出">登出</button>
 </div>
 
+<!-- 主介面 -->
 <div class="container" id="mainContainer" style="display: none;">
     <!-- 導航首頁 -->
     <div id="step1" class="step-panel dashboard-wrapper">
@@ -235,7 +236,9 @@
             </div>
         </div>
         <div id="initialFeedbackArea"></div>
-        <button id="submitAnsBtn" onclick="checkFirstAnswer()">提交答案並核對平衡</button>
+        <div style="margin-top: 20px;">
+            <button id="submitAnsBtn" onclick="checkFirstAnswer()">提交答案並核對平衡</button>
+        </div>
     </div>
 
     <!-- 天秤推導教學黑板 -->
@@ -474,6 +477,11 @@
         } catch(e) { console.error(e); return false; }
     }
 
+    function generateEquation(typeCode) {
+        let t = typeCode === 'MIX' ? ['1', '2', '3', '4'][Math.floor(Math.random() * 4)] : typeCode;
+        return EQUATION_BANK[t].generate();
+    }
+
     function checkFirstAnswer() {
         let userAns = (session.wrongAttemptsThisQuestion === 1) ? document.getElementById('ansRetryInput').value.replace(/\s+/g,'') : document.getElementById('ansInput').value.replace(/\s+/g,'');
         if(userAns === eqData.ansStr) {
@@ -488,7 +496,7 @@
             if(session.wrongAttemptsThisQuestion === 1) {
                 document.getElementById('ansInput').disabled = true; document.getElementById('retryInputWrapper').style.display = 'block'; 
                 let area = document.getElementById('initialFeedbackArea'); area.className="feedback warning";
-                area.innerHTML = "❌ 天秤傾斜了！兩邊不對等。<b>首答不扣分</b>，請仔細覆實並於下方<b>補答框</b>重新修正！";
+                area.innerHTML = "❌ 天秤傾斜了！兩邊不對等。<b>首答不扣分</b>，請仔細覆實並於下方<b>補答框</b>重新核對修正答案！";
             } else {
                 if(session.currentMode === 'CHALLENGE') session.score--;
                 document.getElementById('scoreText').innerText = `目前積分: ${session.score} 分`;
@@ -605,7 +613,7 @@
 
     function resetToMainMenu(nc) {
         if(nc && (document.getElementById('step2').classList.contains('active')||document.getElementById('step3').classList.contains('active'))) {
-            if(!confirm("確定要中途退出挑戰嗎？")); return;
+            if(!confirm("確定要中途退出挑戰嗎？")) return;
         }
         stopSessionTimer(); document.getElementById('nextBtn').style.display="none"; document.getElementById('teachingZone').style.display="none";
         cloudSaveData(); updateReviewMenuUI(); showPanel('step1');
