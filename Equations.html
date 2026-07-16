@@ -366,9 +366,7 @@
         };
     }
 
-    // 確保 showPanel 絕對可見
     function showPanel(id) { 
-        console.log("切換面板至: " + id);
         document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active')); 
         const target = document.getElementById(id);
         if(target) {
@@ -388,7 +386,6 @@
     }
 
     function initChallengeSession() {
-        // 1. 強制確保 DOM 狀態正確
         const typeSelect = document.getElementById('typeSelect');
         const condition = document.querySelector('input[name="endCondition"]:checked').value;
         const total = parseInt(document.getElementById('totalQuestionsInput').value) || 5;
@@ -400,7 +397,6 @@
         session.score = 0;
         session.questionList = [];
 
-        // 2. 數據生成與安全初始化
         if (condition === 'COUNT') {
             stopSessionTimer();
             session.totalQuestions = total;
@@ -408,7 +404,7 @@
                 session.questionList.push(generateEquation(session.selectedType));
             }
         } else {
-            session.totalQuestions = 999; // 非固定題數模式預設大值
+            session.totalQuestions = 999; 
             session.questionList.push(generateEquation(session.selectedType));
             if (condition === 'TIME_LIMIT') {
                 let sec = parseInt(document.getElementById('timeLimitSelect').value) || 300;
@@ -416,12 +412,9 @@
                 startSessionTimer(sec);
             }
         }
-
-        // 3. 強制顯示作答頁面，繞過所有可能的渲染卡點
-        console.log("初始化完成，準備顯示 stage2");
         loadEquationToStage();
     }
-    
+
     function initReviewSession() {
         stopSessionTimer(); wrongQuestionBank = [...cacheStorage.EQ.wrongBook]; if (wrongQuestionBank.length === 0) return;
         session.currentMode = 'REVIEW'; session.currentIdx = 0; session.totalQuestions = wrongQuestionBank.length; session.questionList = wrongQuestionBank;
@@ -430,37 +423,25 @@
     }
 
     function loadEquationToStage() {
-        // 確保 DOM 可見性
         document.getElementById('mainContainer').style.display = 'block';
+        session.wrongAttemptsThisQuestion = 0; session.wrongAttemptsInTeaching = 0; session.hasAddedToWrongBookThisQuestion = false;
         
-        session.wrongAttemptsThisQuestion = 0;
-        session.wrongAttemptsInTeaching = 0;
-        session.hasAddedToWrongBookThisQuestion = false;
-        
-        // 數據解析
+        document.getElementById('initialFeedbackArea').innerHTML = '';
+        document.getElementById('ansInput').disabled = false; document.getElementById('ansInput').value = '';
+        document.getElementById('retryInputWrapper').style.display = 'none'; document.getElementById('ansRetryInput').value = '';
+        document.getElementById('teachingWrongArea1').innerHTML = ''; document.getElementById('teachingWrongArea2').innerHTML = ''; document.getElementById('teachingWrongArea3').innerHTML = '';
+
         let expr = session.questionList[session.currentIdx];
-        if(!parseEquationStructure(expr)) { 
-            alert("題目解析失敗，自動跳過此題");
-            advanceQuestion();
-            return;
-        }
+        if(!parseEquationStructure(expr)) { alert("天秤數據初始化失敗！"); resetToMainMenu(false); return; }
+        if(session.currentMode==='CHALLENGE') { cacheStorage.EQ.stats[session.currentTypeNum].total++; cloudSaveData(); }
         
-        if(session.currentMode === 'CHALLENGE') {
-            cacheStorage.EQ.stats[session.currentTypeNum].total++;
-            cloudSaveData();
-        }
-        
-        document.getElementById('step2Title').innerText = (session.currentMode === 'REVIEW') ? "👹 魔王錯題重溫挑戰" : "請依條件計算求值";
+        document.getElementById('step2Title').innerText = (session.currentMode === 'REVIEW') ? "👹 魔王錯題重溫挑戰" : "請解出未知數的值使天秤維持平衡";
         document.getElementById('scoreText').innerText = `目前積分: ${session.score} 分`;
-        
-        // 渲染題目
         document.getElementById('displayEq').innerHTML = `
             <div style="font-size: 20px; color:#cbd5e1; margin-bottom:10px;">📊 題型：${eqData.formulaTitle}</div>
             <div style="font-size: 32px; color:#fff; letter-spacing:1px;">${eqData.leftExpr} = ${eqData.rightExpr}</div>
-            <div class="balance-graphic">⚖️ [左盤] ${eqData.leftExpr} ｜ [右盤] ${eqData.rightExpr}</div>
+            <div class="balance-graphic">⚖️ [左盤木盒] 放置了 <b>${eqData.leftExpr}</b> ｜ [右盤砝碼] 放置了 <b>${eqData.rightExpr}</b></div>
         `;
-        
-        // 強制切換至作答面板
         showPanel('step2');
         updateProgressBarUI();
     }
@@ -482,6 +463,11 @@
             eqData.midLeft = coeff === 1 ? "x" : `${coeff}x`; eqData.midRight = String(coeff * parseInt(eqData.ansStr));
             return true;
         } catch(e) { console.error(e); return false; }
+    }
+
+    function generateEquation(typeCode) {
+        let t = typeCode === 'MIX' ? ['1', '2', '3', '4'][Math.floor(Math.random() * 4)] : typeCode;
+        return EQUATION_BANK[t].generate();
     }
 
     function checkFirstAnswer() {
