@@ -412,15 +412,22 @@
         if(target) {
             target.classList.add('active');
             document.getElementById('mainContainer').style.display = 'block';
+            
+            // 控制左上角返回鍵
             let navLeft = document.getElementById('topLeftNav');
             if (navLeft) {
-                navLeft.style.display = 'block'; // 永遠顯示左上角返回鍵
-                // 根據當前所在面板，動態改變按鈕文字
+                navLeft.style.display = 'block'; 
                 navLeft.querySelector('button').innerText = (id === 'step1') ? '< 返回主目錄' : '< 返回選單';
+            }
+            
+            // 控制右上角登出鍵 (補回這行即可顯示)
+            let navRight = document.getElementById('topRightNav');
+            if (navRight) {
+                navRight.style.display = 'block';
             }
         }
     }
-
+    
     function switchSetupConfig(mode) {
         session.currentMode = mode;
         if(mode==='CHALLENGE') showPanel('step1_challenge');
