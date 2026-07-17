@@ -413,7 +413,11 @@
             target.classList.add('active');
             document.getElementById('mainContainer').style.display = 'block';
             let navLeft = document.getElementById('topLeftNav');
-            if (navLeft) navLeft.style.display = (id === 'step1') ? 'none' : 'block'; 
+            if (navLeft) {
+                navLeft.style.display = 'block'; // 永遠顯示左上角返回鍵
+                // 根據當前所在面板，動態改變按鈕文字
+                navLeft.querySelector('button').innerText = (id === 'step1') ? '< 返回主目錄' : '< 返回選單';
+            }
         }
     }
 
@@ -706,7 +710,15 @@
         cloudSaveData(); updateReviewMenuUI(); showPanel('step1');
     }
 
-    function handleNavigationBack() { stopSessionTimer(); window.location.replace("home.html"); }
+    function handleNavigationBack() { 
+        // 判斷目前是否在大廳 (step1)，是則回遊戲選擇畫面，否則退回模組選單
+        if(document.getElementById('step1').classList.contains('active')) {
+            stopSessionTimer(); 
+            window.location.replace("home.html"); 
+        } else {
+            resetToMainMenu(true); // 帶有防呆確認的退回選單機制
+        }
+    }
     function toggleConditionUI() { let c = document.querySelector('input[name="endCondition"]:checked').value; document.getElementById('countInputWrapper').style.display = c === 'COUNT' ? 'block' : 'none'; document.getElementById('targetScoreInputWrapper').style.display = c === 'TARGET_SCORE' ? 'block' : 'none'; document.getElementById('timeLimitInputWrapper').style.display = c === 'TIME_LIMIT' ? 'block' : 'none'; }
     function updateReviewMenuUI() { let c = (cacheStorage.EQ.wrongBook || []).length; document.getElementById('reviewModeCard').classList.toggle('disabled', c===0); document.getElementById('reviewTitle').innerText = `失衡錯題庫 (${c})`; }
     function cloudSaveData() { if (["GUEST"].includes(currentRole) || !userRawClass || !userRawSeat) return; try { localStorage.setItem(`EquationsCache_${userRawClass}-${userRawSeat}`, JSON.stringify(cacheStorage.EQ)); } catch(e){} }
