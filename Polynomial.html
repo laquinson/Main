@@ -226,11 +226,35 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         try {
-            initGlobalStatsCache();
             renderTypeSelectOptions();
             checkActiveSessionOnLoad();
         } catch(e) { console.error(e); showPanel('step1'); }
     });
+
+    // 【新增】永久綁定個人資料庫機制
+    function initLocalFallback(tC, tS) {
+        try {
+            let local = localStorage.getItem(`PolyCache_${tC}-${tS}`);
+            if(local) {
+                let p = JSON.parse(local);
+                if(p.SIMPLIFY && p.SIMPLIFY.stats) {
+                    cacheStorage = p;
+                    wrongQuestionBank = cacheStorage.SIMPLIFY.wrongBook || [];
+                    return;
+                }
+            }
+        } catch(e) {}
+        initGlobalStatsCache();
+        wrongQuestionBank = [];
+    }
+
+    // 【新增】永久儲存個人數據至雲端
+    function cloudSaveData() {
+        if (["GUEST", "TEACHER"].includes(currentRole) || !userRawClass || !userRawSeat) return;
+        try {
+            localStorage.setItem(`PolyCache_${userRawClass}-${userRawSeat}`, JSON.stringify(cacheStorage));
+        } catch(e){}
+    }
 
     function initGlobalStatsCache() {
         cacheStorage.SIMPLIFY.stats = {
@@ -262,11 +286,8 @@
             buildTeacherQueryOptions();
         } else {
             if (accountDOM) accountDOM.innerText = `挑戰者: ${userRawClass}班${String(userRawSeat).padStart(2, '0')}號`;
-            try {
-                let cachedData = localStorage.getItem("Poly_Wrong_Bank");
-                wrongQuestionBank = cachedData ? JSON.parse(cachedData) : [];
-                cacheStorage.SIMPLIFY.wrongBook = wrongQuestionBank;
-            } catch(e) { wrongQuestionBank = []; }
+            // 【修復】呼叫個人的資料還原
+            initLocalFallback(userRawClass, userRawSeat);
             updateReviewCardUI();
         }
         showPanel('step1');
@@ -309,7 +330,7 @@
             let timeWrapper = document.getElementById('timeLimitInputWrapper');
             if(countWrapper) countWrapper.style.display = c === 'COUNT' ? 'block' : 'none';
             if(timeWrapper) timeWrapper.style.display = c === 'TIME_LIMIT' ? 'block' : 'none';
-        } catch(e) { console.warn(e); }
+        } catch(e) {}
     }
 
     function convertToNativeSup(str) { return str ? str.replace(/x\^2/g, "x²").replace(/x\^1/g, "x") : "0"; }
@@ -381,6 +402,7 @@
         let tc = document.getElementById('queryClass').value;
         let ts = document.getElementById('querySeat').value;
         userRawClass = tc; userRawSeat = ts;
+        initLocalFallback(userRawClass, userRawSeat);
         calculateAndRenderStats();
         alert(`🎉 成功撈取 ${tc}班 ${ts}號 的雲端歷程檔案！已更新數據報表。`);
     }
@@ -491,7 +513,6 @@
             session.questionList = [`(${p1})${op}(${p2})|${ansStr}|${p1}|${op}|${p2}|${c1.join(',')}|${c2.join(',')}|${ansA},${ansB},${ansC}|${polyData.isQuad?1:0}|4`]; 
             session.currentIdx = 0; loadQuestionToStage();
         } catch(e) {
-            console.error(e);
             session.questionList = ["(3x+8)+(2x+5)|11x+13|3x+8|+|2x+5|0,3,8|0,2,5|0,5,13|0|4"];
             session.currentIdx = 0; loadQuestionToStage();
         }
@@ -513,6 +534,7 @@
 
             if(session.currentMode === 'CHALLENGE') {
                 cacheStorage[currentEngine].stats[session.currentTypeNum].total++;
+                cloudSaveData(); // 存檔
             }
             
             setTimeout(() => {
@@ -551,7 +573,13 @@
             if(session.currentMode === 'CHALLENGE') {
                 if(session.wrongAttemptsThisQuestion === 0) cacheStorage[currentEngine].stats[session.currentTypeNum].firstMatch++;
                 else cacheStorage[currentEngine].stats[session.currentTypeNum].retryMatch++;
+            } else if(session.currentMode === 'REVIEW') {
+                wrongQuestionBank = wrongQuestionBank.filter(q => q !== currentQ);
+                cacheStorage.SIMPLIFY.wrongBook = wrongQuestionBank;
+                alert("🎉 成功擊破錯題！該題已從錯題庫消除。");
             }
+            cloudSaveData(); // 存檔
+
             if (session.currentMode === 'SOLVER' || session.currentIdx >= (session.totalQuestions - 1)) {
                 showPanel('step1'); 
             } else {
@@ -566,9 +594,9 @@
             }
             if (!wrongQuestionBank.includes(currentQ)) { 
                 wrongQuestionBank.push(currentQ); 
-                localStorage.setItem("Poly_Wrong_Bank", JSON.stringify(wrongQuestionBank)); 
                 cacheStorage.SIMPLIFY.wrongBook = wrongQuestionBank;
             }
+            cloudSaveData(); // 存檔
             updateReviewCardUI(); showPanel('step3'); initInteractiveBlackboard();
         }
     }
@@ -655,12 +683,24 @@
         }, 1000);
     }
     function stopSessionTimer() { if(timerInterval) clearInterval(timerInterval); }
-    function logoutSession() { stopSessionTimer(); localStorage.clear(); window.location.replace("index.html"); }
+    
+    // 【修復】安全登出機制
+    function logoutSession() { 
+        if(confirm("確定登出系統嗎？")) { 
+            stopSessionTimer();
+            localStorage.removeItem("Active_User_Role");
+            localStorage.removeItem("Active_User_Class");
+            localStorage.removeItem("Active_User_Seat");
+            localStorage.removeItem("Active_User_TeacherID");
+            window.location.replace("index.html"); 
+        } 
+    }
+    
     function updateReviewCardUI() { 
-        let reviewBtn = document.getElementById('reviewModeCard'); let currentWrongList = JSON.parse(localStorage.getItem("Poly_Wrong_Bank")) || [];
-        if(reviewBtn) reviewBtn.classList.toggle('disabled', currentWrongList.length === 0);
+        let reviewBtn = document.getElementById('reviewModeCard'); 
+        if(reviewBtn) reviewBtn.classList.toggle('disabled', wrongQuestionBank.length === 0);
         let title = document.getElementById('reviewTitle');
-        if(title) title.innerText = `錯題庫 (${currentWrongList.length})`; 
+        if(title) title.innerText = `錯題庫 (${wrongQuestionBank.length})`; 
     }
 </script>
 </body>
