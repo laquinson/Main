@@ -57,7 +57,6 @@
 </div>
 
 <script>
-    // 生命週期防禦：等待 DOM 構建完畢後再寫入選單
     document.addEventListener('DOMContentLoaded', function() {
         let cHtml = "", sHtml = "", tHtml = "";
         for(let g=1;g<=6;g++) ['A','B','C','D'].forEach(l => cHtml+=`<option value="${g}${l}">${g}${l} 班</option>`);
@@ -73,7 +72,6 @@
         document.getElementById('teacherLoginBox').style.display = m === 'TEACHER' ? 'block' : 'none'; 
     }
 
-    // 嚴格使用 window.location.replace 進行快取閉環跳轉
     function loginStudent() {
         localStorage.setItem("Active_User_Role", "STUDENT");
         localStorage.setItem("Active_User_Class", document.getElementById('loginClass').value);
