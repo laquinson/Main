@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>中一多變數代數式求值系統 (完美星空終極版)</title>
+    <title>中一多變數代數式求值系統</title>
     <style>
         :root { --primary: #3b82f6; --primary-hover: #1d4ed8; --success: #10b981; --danger: #ef4444; --warning: #f59e0b; --info: #06b6d4; --stage-bg: #0f172a; --bg: #f8fafc; --teacher-color: #8b5cf6; --card-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.15), 0 10px 10px -5px rgb(0 0 0 / 0.1); --glass-bg: rgba(255, 255, 255, 0.12); --glass-border: 1px solid rgba(255, 255, 255, 0.25); --glass-blur: blur(14px); }
         body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Microsoft JhengHei", sans-serif; background-image: url("https://i.imgur.com/f118Qxn.jpeg"); background-size: 100% auto; background-repeat: repeat-y; background-attachment: scroll; background-position: top center; background-color: #0b1424; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; box-sizing: border-box; }
@@ -180,13 +180,19 @@
 
     let currentRole = "STUDENT", userRawClass = "", userRawSeat = "";
     let currentPanelId = "step1"; 
-    // 【防當機修正 1】直接賦予完整的計分板物件，防止剛登入就快速按闖關造成的 undefined total++ 閃退！
-    let cacheStorage = { EQ: { wrongBook: [], stats: {
-        1: { name: "雙變數公式代入求值", total:0, firstMatch:0, retryMatch:0, failed:0 },
-        2: { name: "三變數公式代入求值", total:0, firstMatch:0, retryMatch:0, failed:0 },
-        3: { name: "多變數綜合公式求值", total:0, firstMatch:0, retryMatch:0, failed:0 },
-        4: { name: "進階多變數大挑戰 (含次方)", total:0, firstMatch:0, retryMatch:0, failed:0 }
-    } } };
+    
+    // 【強力修復】強制預設包含所有結構，防止剛載入點擊造成的讀取 undefined total 閃退
+    let cacheStorage = { 
+        EQ: { 
+            wrongBook: [], 
+            stats: {
+                1: { name: "雙變數公式代入求值", total:0, firstMatch:0, retryMatch:0, failed:0 },
+                2: { name: "三變數公式代入求值", total:0, firstMatch:0, retryMatch:0, failed:0 },
+                3: { name: "多變數綜合公式求值", total:0, firstMatch:0, retryMatch:0, failed:0 },
+                4: { name: "進階多變數大挑戰 (含次方)", total:0, firstMatch:0, retryMatch:0, failed:0 }
+            } 
+        } 
+    };
     
     let timerInterval = null; let timeLeft = 0; let wrongQuestionBank = [];
     let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, targetScore: 5, timeLimitSetting: 300, currentIdx: 0, score: 0, selectedType: 'MIX', questionList: [], currentTypeNum: 1, wrongAttemptsThisQuestion: 0, wrongAttemptsInTeaching: 0, hasAddedToWrongBookThisQuestion: false };
@@ -218,21 +224,23 @@
         renderTypeSelectOptions(); updateReviewMenuUI(); showPanel('step1');
     });
 
-    function getInitialStatsObject() { return { 1: { name: "雙變數公式代入求值", total:0, firstMatch:0, retryMatch:0, failed:0 }, 2: { name: "三變數公式代入求值", total:0, firstMatch:0, retryMatch:0, failed:0 }, 3: { name: "多變數綜合公式求值", total:0, firstMatch:0, retryMatch:0, failed:0 }, 4: { name: "進階多變數大挑戰 (含次方)", total:0, firstMatch:0, retryMatch:0, failed:0 } }; }
-
     async function initLocalFallback(tC, tS) { 
         let cacheKey = `MultiVarCache_${tC}-${tS}`;
         try { let local = localStorage.getItem(cacheKey); if(local) { let p = JSON.parse(local); if(p.stats?.[1]) { cacheStorage.EQ = p; } } } catch(e){} 
         
         try {
             let res = await fetch(`${GAS_API_URL}?type=GET_CACHE&cacheKey=${cacheKey}`);
-            if(res.ok) { let data = await res.json(); if(data && data.cacheData) { let p = JSON.parse(data.cacheData); if(p.stats?.[1]) { cacheStorage.EQ = p; localStorage.setItem(cacheKey, data.cacheData); } } }
+            if(res.ok) { 
+                let data = await res.json(); 
+                if(data && data.cacheData) { 
+                    let parsedData = JSON.parse(data.cacheData);
+                    if(parsedData.stats && parsedData.stats[1]) {
+                        cacheStorage.EQ = parsedData;
+                        localStorage.setItem(cacheKey, data.cacheData); 
+                    }
+                } 
+            }
         } catch(e) {}
-
-        // 強制確認結構完整性
-        if(!cacheStorage.EQ || !cacheStorage.EQ.stats || !cacheStorage.EQ.stats[1]) {
-            cacheStorage.EQ = { wrongBook: [], stats: getInitialStatsObject() };
-        }
         updateReviewMenuUI();
     }
 
@@ -241,8 +249,9 @@
         try { 
             let cacheKey = `MultiVarCache_${userRawClass}-${userRawSeat}`; let cacheStr = JSON.stringify(cacheStorage.EQ);
             localStorage.setItem(cacheKey, cacheStr); 
+            
             let params = new URLSearchParams(); params.append('type', 'SAVE_CACHE'); params.append('cacheKey', cacheKey); params.append('cacheData', cacheStr);
-            fetch(GAS_API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params }).catch(e=>console.log(e));
+            fetch(GAS_API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params.toString() }).catch(e=>{});
         } catch(e){} 
     }
 
@@ -313,7 +322,13 @@
         document.getElementById('mainContainer').style.display = 'block'; session.wrongAttemptsThisQuestion = 0; session.wrongAttemptsInTeaching = 0; session.hasAddedToWrongBookThisQuestion = false;
         document.getElementById('initialFeedbackArea').innerHTML = ''; document.getElementById('ansInput').disabled = false; document.getElementById('ansInput').value = ''; document.getElementById('retryInputWrapper').style.display = 'none'; document.getElementById('ansRetryInput').value = ''; document.getElementById('teachingWrongArea1').innerHTML = ''; document.getElementById('teachingWrongArea2').innerHTML = ''; document.getElementById('teachingWrongArea3').innerHTML = '';
         let expr = session.questionList[session.currentIdx]; if(!parseEquationStructure(expr)) { alert("題目解析失敗！"); resetToMainMenu(false); return; }
-        if(session.currentMode==='CHALLENGE') { cacheStorage.EQ.stats[session.currentTypeNum].total++; cloudSaveData(); }
+        
+        // 確保 stats 有值才做加總
+        if(session.currentMode==='CHALLENGE' && cacheStorage.EQ.stats[session.currentTypeNum]) { 
+            cacheStorage.EQ.stats[session.currentTypeNum].total++; 
+            cloudSaveData(); 
+        }
+        
         const step2Title = document.getElementById('step2Title'); if(step2Title) step2Title.innerText = (session.currentMode === 'REVIEW') ? "👹 魔王錯題重溫挑戰" : "請依各變數數值求出最終結果";
         document.getElementById('scoreText').innerText = `目前積分: ${session.score} 分`; document.getElementById('displayEq').innerHTML = `<div style="font-size: 28px; letter-spacing: 0.5px; margin-top: 10px;">已知 ${convertToRichMathHTML(eqData.targetLetter + " = " + eqData.formulaName)}</div><div style="font-size: 22px; color: #cbd5e1; margin-top: 20px; font-weight: normal;">當 ${eqData.variablesText}，求 ${eqData.targetLetter} = ?</div>`;
         showPanel('step2'); updateProgressBarUI();
@@ -344,7 +359,6 @@
         cloudSaveData(); updateReviewMenuUI(); setupNextButtonLabel();
     }
 
-    // 【防卡死修正 4】移除了第二步挑戰失敗時一開始就彈出的直接顯示答案鍵
     function executeFinalFailure() {
         document.getElementById('interactiveStageBox').innerHTML = `已知 ${convertToRichMathHTML(eqData.targetLetter + " = " + eqData.formulaName)} <br> ⚖️ 當 ${eqData.variablesText}`; document.getElementById('nextBtn').style.display="none"; document.getElementById('solveBtn').style.display="block"; document.getElementById('teachingZone').style.display="none";
         let f=document.getElementById('feedbackArea'); f.className="feedback error"; 
@@ -367,7 +381,6 @@
 
     function renderMathSteps(code) { const box = document.getElementById('mathStepBox'); let html = `<div class="step-line ${code===1?'active-line':''}">[主體公式]：${convertToRichMathHTML(eqData.targetLetter + " = " + eqData.formulaName)}<br>[已知條件]：${eqData.variablesText}</div>`; if(code>=2) html+=`<div class="step-line ${code===2?'active-line':''}">[第一步：群組變數代入] <br>&rArr; ${eqData.targetLetter} = ${convertToRichMathHTML(eqData.targetRightCamp)}</div>`; if(code>=3) html+=`<div class="step-line ${code===3?'active-line':''}">[第二步：乘除/次方優先] <br>&rArr; ${eqData.targetLetter} = ${convertToRichMathHTML(eqData.midStepStr)}</div>`; if(code>=4) html+=`<div class='step-line active-line'>[最終精確求值] <br>&rArr; 答案 ${eqData.targetLetter} = ${eqData.ansStr} 🎯</div>`; box.innerHTML = html; }
     
-    // 【防卡死密鑰展現機制】必須答錯3次才會出現
     function checkTeachingWrongCounter(targetAreaId) { let area = document.getElementById(targetAreaId); if (session.wrongAttemptsInTeaching >= 3) { area.innerHTML = `<div style="margin-top:10px; padding:10px; background:#fef2f2; border-left:4px solid var(--danger); border-radius:6px; font-weight:bold; color:var(--danger);">💡 防卡死密鑰：<button class='btn-warning' style='width:auto;padding:4px 8px;font-size:12px;margin-left:10px;' onclick='alert("💡 最終結果為 ${eqData.ansStr}")'>🔓 直接秀出答案</button></div>`; } else { area.innerHTML = ""; } }
     
     function setupNextButtonLabel() { let n = document.getElementById('nextBtn'); if(session.currentMode==='CHALLENGE') { n.innerText = (session.endCondition==='TIME_LIMIT') ? "下一道瘋狂求值題 ➡️" : ((session.currentIdx < session.questionList.length-1)?"前進下一題 ➡️":"🏁 挑戰結束，查看報告"); } else if(session.currentMode==='REVIEW') n.innerText = (session.currentIdx === session.totalQuestions-1 || cacheStorage.EQ.wrongBook.length===0)?"🏁 結束溫習返回目錄":"下一道魔王關卡 ➡️"; else n.innerText="↩️ 返回選單"; }
@@ -399,7 +412,7 @@
             let r = JSON.parse(localStorage.getItem('MathSystem_Student_Records') || '[]');
             r.unshift(record); if(r.length>200) r.pop(); localStorage.setItem('MathSystem_Student_Records', JSON.stringify(r));
             let params = new URLSearchParams(); params.append('type', 'RECORD'); params.append('class', record.class); params.append('seat', record.seat); params.append('module', record.module); params.append('score', record.score); params.append('timestamp', record.timestamp);
-            fetch(GAS_API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params }).catch(e=>console.log(e));
+            fetch(GAS_API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params.toString() }).catch(e=>{});
         } catch(e){}
     }
 
