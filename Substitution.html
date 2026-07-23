@@ -179,9 +179,16 @@
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwIK7Mqd4WEDpbuZR-PDt4pq-8EkZ74POUDDe9WgxZA_5QqPvIBdGdD2jVFjsVOZRIj/exec";
 
     let currentRole = "STUDENT", userRawClass = "", userRawSeat = "";
-    let currentPanelId = "step1"; let cacheStorage = { EQ: { wrongBook: [], stats: {} } };
-    let timerInterval = null; let timeLeft = 0;
+    let currentPanelId = "step1"; 
+    // 【防當機修正 1】直接賦予完整的計分板物件，防止剛登入就快速按闖關造成的 undefined total++ 閃退！
+    let cacheStorage = { EQ: { wrongBook: [], stats: {
+        1: { name: "雙變數公式代入求值", total:0, firstMatch:0, retryMatch:0, failed:0 },
+        2: { name: "三變數公式代入求值", total:0, firstMatch:0, retryMatch:0, failed:0 },
+        3: { name: "多變數綜合公式求值", total:0, firstMatch:0, retryMatch:0, failed:0 },
+        4: { name: "進階多變數大挑戰 (含次方)", total:0, firstMatch:0, retryMatch:0, failed:0 }
+    } } };
     
+    let timerInterval = null; let timeLeft = 0; let wrongQuestionBank = [];
     let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, targetScore: 5, timeLimitSetting: 300, currentIdx: 0, score: 0, selectedType: 'MIX', questionList: [], currentTypeNum: 1, wrongAttemptsThisQuestion: 0, wrongAttemptsInTeaching: 0, hasAddedToWrongBookThisQuestion: false };
     let eqData = { type: 1, rawStr: "", formulaTitle: "", formulaName: "", targetLetter: "", variablesText: "", targetRightCamp: "", midStepStr: "", ansStr: "" };
 
@@ -205,7 +212,6 @@
                 setupLayoutForStudent();
             } else if (currentRole === "GUEST") {
                 badge.innerText = `挑戰者: 訪客體驗`;
-                cacheStorage.EQ.wrongBook = []; cacheStorage.EQ.stats = getInitialStatsObject();
                 setupLayoutForStudent();
             }
         }
@@ -220,8 +226,6 @@
             let res = await fetch(`${GAS_API_URL}?type=GET_CACHE&cacheKey=${cacheKey}`);
             if(res.ok) { let data = await res.json(); if(data && data.cacheData) { cacheStorage.EQ = JSON.parse(data.cacheData); localStorage.setItem(cacheKey, data.cacheData); } }
         } catch(e) {}
-
-        if(!cacheStorage.EQ || !cacheStorage.EQ.stats) cacheStorage.EQ = { wrongBook: [], stats: getInitialStatsObject() }; 
         updateReviewMenuUI();
     }
 
@@ -236,7 +240,6 @@
     }
 
     function setupLayoutForStudent() { document.querySelectorAll('.id-student-only').forEach(el => el.style.display = "flex"); updateReviewMenuUI(); }
-    function getInitialStatsObject() { return { 1: { name: "雙變數公式代入求值", total:0, firstMatch:0, retryMatch:0, failed:0 }, 2: { name: "三變數公式代入求值", total:0, firstMatch:0, retryMatch:0, failed:0 }, 3: { name: "多變數綜合公式求值", total:0, firstMatch:0, retryMatch:0, failed:0 }, 4: { name: "進階多變數大挑戰 (含次方)", total:0, firstMatch:0, retryMatch:0, failed:0 } }; }
     function renderTypeSelectOptions() { const ts = document.getElementById('typeSelect'); if(ts) ts.innerHTML = `<option value="1">1. 雙變數公式</option><option value="2">2. 三變數公式</option><option value="3">3. 多變數綜合</option><option value="4">4. 進階多變數(含次方)</option><option value="MIX" selected>5. 🔀 跨學科混合</option>`; }
 
     function showPanel(id) { 
@@ -274,7 +277,13 @@
     function generateQuestion(typeCode) {
         let t = typeCode === 'MIX' ? ['1', '2', '3', '4'][Math.floor(Math.random() * 4)] : typeCode; let pool = FORMULA_BANK[t]; let formula = pool[Math.floor(Math.random() * pool.length)];
         let varAssigns = []; let randVal = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-        formula.vars.forEach(v => { let range = formula.range[v]; let val = randVal(range[0], range[1]); if (v === 'D' && val === 0) val = 2; if (v === 'x' && val === formula.range['a'][0]) val += 3; varAssigns.push(`${v} = ${val}`); });
+        formula.vars.forEach(v => { 
+            let range = formula.range[v]; let val = randVal(range[0], range[1]); 
+            if (v === 'D' && val === 0) val = 2; 
+            // 【防當機修正 2】嚴謹檢查屬性，防止公式切換時抓不到 'a' 導致死機
+            if (v === 'x' && formula.range['a'] && val === formula.range['a'][0]) val += 3; 
+            varAssigns.push(`${v} = ${val}`); 
+        });
         return `${formula.name} | 已知 ${formula.target} = ${formula.expr}。當 ${varAssigns.join(', ')}，${formula.target} = ? #|#${t}`;
     }
 
@@ -329,9 +338,11 @@
         cloudSaveData(); updateReviewMenuUI(); setupNextButtonLabel();
     }
 
+    // 【防卡死修正 4】移除了第二步挑戰失敗時一開始就彈出的直接顯示答案鍵
     function executeFinalFailure() {
         document.getElementById('interactiveStageBox').innerHTML = `已知 ${convertToRichMathHTML(eqData.targetLetter + " = " + eqData.formulaName)} <br> ⚖️ 當 ${eqData.variablesText}`; document.getElementById('nextBtn').style.display="none"; document.getElementById('solveBtn').style.display="block"; document.getElementById('teachingZone').style.display="none";
-        let f=document.getElementById('feedbackArea'); f.className="feedback error"; let debugBtn = (session.currentMode === 'SOLVER') ? `<br><br><button class='btn-warning' style='width:auto;padding:8px 15px;' onclick='alert("💡 本題精確答案為 " + eqData.ansStr)'>🔓 直接顯示答案</button>` : ""; f.innerHTML = session.currentMode==='CHALLENGE' ? "❌ 補答依然有些微誤差。<span style='color:red;'>[挑戰失敗] 積分 -1 分！</span>請開啟下方破譯教學。" + debugBtn : "❌ 計算有誤。請點擊下方開啟逐步拆解教學。" + debugBtn;
+        let f=document.getElementById('feedbackArea'); f.className="feedback error"; 
+        f.innerHTML = session.currentMode==='CHALLENGE' ? "❌ 補答依然有些微誤差。<span style='color:red;'>[挑戰失敗] 積分 -1 分！</span>請開啟下方破譯教學。" : "❌ 計算有誤。請點擊下方開啟逐步拆解教學。";
     }
 
     function startInteractiveSolving() { document.getElementById('solveBtn').style.display="none"; document.getElementById('teachingZone').style.display="flex"; document.getElementById('stageCampArea').style.display="block"; document.getElementById('stageCombineArea').style.display="none"; document.getElementById('stageFinalArea').style.display="none"; document.getElementById('rightCampInput').value = ""; renderMathSteps(1); checkTeachingWrongCounter('teachingWrongArea1'); }
@@ -349,7 +360,10 @@
     function executeFinal() { if(document.getElementById('finalAnsInput').value.replace(/\s+/g,'') === eqData.ansStr) { document.getElementById('interactiveStageBox').innerHTML = `<span style="white-space: nowrap;">⚖️ 破譯守恆成功：${eqData.targetLetter} = <span style="color:#00ff00; font-weight:900;">${eqData.ansStr}</span></span>`; document.getElementById('stageFinalArea').style.display="none"; document.getElementById('nextBtn').style.display="block"; setupNextButtonLabel(); renderMathSteps(4); } else { session.wrongAttemptsInTeaching++; alert("最終數值不對！"); checkTeachingWrongCounter('teachingWrongArea3'); } }
 
     function renderMathSteps(code) { const box = document.getElementById('mathStepBox'); let html = `<div class="step-line ${code===1?'active-line':''}">[主體公式]：${convertToRichMathHTML(eqData.targetLetter + " = " + eqData.formulaName)}<br>[已知條件]：${eqData.variablesText}</div>`; if(code>=2) html+=`<div class="step-line ${code===2?'active-line':''}">[第一步：群組變數代入] <br>&rArr; ${eqData.targetLetter} = ${convertToRichMathHTML(eqData.targetRightCamp)}</div>`; if(code>=3) html+=`<div class="step-line ${code===3?'active-line':''}">[第二步：乘除/次方優先] <br>&rArr; ${eqData.targetLetter} = ${convertToRichMathHTML(eqData.midStepStr)}</div>`; if(code>=4) html+=`<div class='step-line active-line'>[最終精確求值] <br>&rArr; 答案 ${eqData.targetLetter} = ${eqData.ansStr} 🎯</div>`; box.innerHTML = html; }
+    
+    // 【防卡死密鑰展現機制】必須答錯3次才會出現
     function checkTeachingWrongCounter(targetAreaId) { let area = document.getElementById(targetAreaId); if (session.wrongAttemptsInTeaching >= 3) { area.innerHTML = `<div style="margin-top:10px; padding:10px; background:#fef2f2; border-left:4px solid var(--danger); border-radius:6px; font-weight:bold; color:var(--danger);">💡 防卡死密鑰：<button class='btn-warning' style='width:auto;padding:4px 8px;font-size:12px;margin-left:10px;' onclick='alert("💡 最終結果為 ${eqData.ansStr}")'>🔓 直接秀出答案</button></div>`; } else { area.innerHTML = ""; } }
+    
     function setupNextButtonLabel() { let n = document.getElementById('nextBtn'); if(session.currentMode==='CHALLENGE') { n.innerText = (session.endCondition==='TIME_LIMIT') ? "下一道瘋狂求值題 ➡️" : ((session.currentIdx < session.questionList.length-1)?"前進下一題 ➡️":"🏁 挑戰結束，查看報告"); } else if(session.currentMode==='REVIEW') n.innerText = (session.currentIdx === session.totalQuestions-1 || cacheStorage.EQ.wrongBook.length===0)?"🏁 結束溫習返回目錄":"下一道魔王關卡 ➡️"; else n.innerText="↩️ 返回選單"; }
     
     function advanceQuestion() { if(session.currentMode==='CHALLENGE') { if(session.endCondition==='COUNT') { if(session.currentIdx < session.questionList.length-1) { session.currentIdx++; loadEquationToStage(); } else { calculateAndRenderStats(); showPanel('step_stats_panel'); } } else if(session.endCondition==='TARGET_SCORE') { if(session.score >= session.targetScore) { alert("🏆 積分達標！完美掌握！"); calculateAndRenderStats(); showPanel('step_stats_panel'); } else { session.currentIdx++; session.questionList.push(generateQuestion(session.selectedType)); loadEquationToStage(); } } else { session.currentIdx++; session.questionList.push(generateQuestion(session.selectedType)); loadEquationToStage(); } } else if(session.currentMode==='REVIEW') { let comb = [...cacheStorage.EQ.wrongBook]; if(comb.length===0 || session.currentIdx >= session.totalQuestions-1) { resetToMainMenu(false); } else { session.currentIdx++; session.totalQuestions=comb.length; session.questionList=comb; loadEquationToStage(); } } else resetToMainMenu(false); }
