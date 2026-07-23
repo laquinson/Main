@@ -218,14 +218,21 @@
         renderTypeSelectOptions(); updateReviewMenuUI(); showPanel('step1');
     });
 
+    function getInitialStatsObject() { return { 1: { name: "雙變數公式代入求值", total:0, firstMatch:0, retryMatch:0, failed:0 }, 2: { name: "三變數公式代入求值", total:0, firstMatch:0, retryMatch:0, failed:0 }, 3: { name: "多變數綜合公式求值", total:0, firstMatch:0, retryMatch:0, failed:0 }, 4: { name: "進階多變數大挑戰 (含次方)", total:0, firstMatch:0, retryMatch:0, failed:0 } }; }
+
     async function initLocalFallback(tC, tS) { 
         let cacheKey = `MultiVarCache_${tC}-${tS}`;
         try { let local = localStorage.getItem(cacheKey); if(local) { let p = JSON.parse(local); if(p.stats?.[1]) { cacheStorage.EQ = p; } } } catch(e){} 
         
         try {
             let res = await fetch(`${GAS_API_URL}?type=GET_CACHE&cacheKey=${cacheKey}`);
-            if(res.ok) { let data = await res.json(); if(data && data.cacheData) { cacheStorage.EQ = JSON.parse(data.cacheData); localStorage.setItem(cacheKey, data.cacheData); } }
+            if(res.ok) { let data = await res.json(); if(data && data.cacheData) { let p = JSON.parse(data.cacheData); if(p.stats?.[1]) { cacheStorage.EQ = p; localStorage.setItem(cacheKey, data.cacheData); } } }
         } catch(e) {}
+
+        // 強制確認結構完整性
+        if(!cacheStorage.EQ || !cacheStorage.EQ.stats || !cacheStorage.EQ.stats[1]) {
+            cacheStorage.EQ = { wrongBook: [], stats: getInitialStatsObject() };
+        }
         updateReviewMenuUI();
     }
 
@@ -280,7 +287,6 @@
         formula.vars.forEach(v => { 
             let range = formula.range[v]; let val = randVal(range[0], range[1]); 
             if (v === 'D' && val === 0) val = 2; 
-            // 【防當機修正 2】嚴謹檢查屬性，防止公式切換時抓不到 'a' 導致死機
             if (v === 'x' && formula.range['a'] && val === formula.range['a'][0]) val += 3; 
             varAssigns.push(`${v} = ${val}`); 
         });
