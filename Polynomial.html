@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>中一多項式化簡與展開系統 (星空磨砂完美版)</title>
-    <!-- 解決 favicon 404 報錯並新增星空 Emoji 圖示 -->
+    <title>中一多項式化簡與展開系統 (星空完美對齊版)</title>
+    <!-- 星空 Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🪐</text></svg>">
     <style>
         :root { 
@@ -19,59 +19,49 @@
             --glass-blur: blur(14px);
         }
         
+        /* 完全對齊 Substitution 的完美置中星空背景 */
         body { 
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
-            background: url("https://i.imgur.com/f118Qxn.jpeg") no-repeat center center fixed; 
-            background-size: cover; background-color: #0b1424; 
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Microsoft JhengHei", sans-serif; 
+            background-image: url("https://i.imgur.com/f118Qxn.jpeg"); 
+            background-size: 100% auto; background-repeat: repeat-y; background-attachment: scroll; background-position: top center; background-color: #0b1424; 
             margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; box-sizing: border-box; 
         }
 
-        /* 頂部身份與導航列 */
         .top-center-account {
             position: absolute; top: 28px; left: 50%; transform: translateX(-50%);
             font-size: 20px; font-weight: 900; color: #ffffff;
-            text-shadow: 1px 1px 4px rgba(0,0,0,0.8); z-index: 100; display: none;
-            font-family: 'Comic Sans MS', sans-serif; white-space: nowrap; 
+            text-shadow: 1px 1px 4px rgba(0,0,0,0.6); z-index: 100; display: none;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif; white-space: nowrap; 
         }
 
         .top-nav-btn { 
-            background: rgba(255, 255, 255, 0.95); border: 2px solid #cbd5e1; padding: 8px 16px; border-radius: 12px; 
+            background: #fff; border: 2px solid #cbd5e1; padding: 8px 16px; border-radius: 12px; 
             font-size: 15px; font-weight: bold; color: #475569; cursor: pointer; display: flex; justify-content: center; align-items: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: all 0.2s;
         }
         .top-nav-btn:hover { transform: scale(1.03); border-color: var(--primary); color: var(--primary); }
         .logout-btn-text { color: var(--danger); border-color: #fecdd3; }
         .logout-btn-text:hover { background: #fff1f2; border-color: var(--danger); color: var(--danger); }
 
-        .top-left-nav { position: absolute; top: 25px; left: 20px; display: none; z-index: 100; }
+        .topLeftNav, .top-left-nav { position: absolute; top: 25px; left: 20px; display: none; z-index: 100; }
         .top-right-nav { position: absolute; top: 25px; right: 20px; display: none; z-index: 100; }
 
-        /* 主容器與磨砂玻璃卡片 */
+        /* 磨砂玻璃主容器對齊 */
         .container { 
-            max-width: 900px; width: 100%; margin-top: 40px; box-sizing: border-box;
+            max-width: 900px; width: 100%; background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+            border: var(--glass-border); padding: 30px; border-radius: 24px; box-shadow: var(--card-shadow); box-sizing: border-box; transition: all 0.3s ease;
         }
-
-        .step-panel { 
-            display: none; 
-            background: var(--glass-bg); 
-            backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
-            border: var(--glass-border); 
-            padding: 30px; border-radius: 24px; 
-            box-shadow: var(--card-shadow); 
-            box-sizing: border-box; 
-            margin-bottom: 20px;
-        }
+        
+        h1, h2, h3, h4 { text-align: center; color: #ffffff; margin-top: 0; font-weight: 800; text-shadow: 1px 1px 4px rgba(0,0,0,0.6); }
+        .step-panel { display: none; }
         .step-panel.active { display: block; }
         
-        h1, h2, h3, h4 { text-align: center; color: #ffffff; margin-top: 0; font-weight: 800; text-shadow: 1px 1px 4px rgba(0,0,0,0.8); }
-        
-        /* 表單控制項 */
         .form-group { margin-bottom: 24px; width: 100%; box-sizing: border-box; }
         .form-group:last-of-type { margin-bottom: 32px; }
         
         label { display: block; margin-bottom: 12px; font-size: 16px; font-weight: 700; color: #ffffff; text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.9); }
         input[type="text"], input[type="password"], input[type="number"], select { 
-            width: 100%; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.4); border-radius: 8px; 
+            width: 100%; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; 
             font-size: 16px; box-sizing: border-box; background: rgba(255, 255, 255, 0.9); color: #0f172a; font-weight: bold; transition: all 0.15s ease; 
         }
         input:focus, select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4); }
@@ -79,7 +69,6 @@
         .radio-group { display: flex; flex-direction: column; gap: 10px; background: rgba(255, 255, 255, 0.15); padding: 15px; border-radius: 12px; }
         .radio-group label { color: #ffffff; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); margin-bottom: 0; font-weight: bold; display: flex; align-items: center; gap: 8px; }
         
-        /* 按鈕樣式 */
         button { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 16px; cursor: pointer; font-weight: bold; transition: all 0.2s; box-sizing: border-box; }
         button:hover { opacity: 0.9; transform: translateY(-1px); }
         button.btn-success { background: var(--success); }
@@ -87,32 +76,29 @@
         button.btn-purple { background: var(--teacher-color); }
         button.btn-secondary { background: #64748b; margin-top: 15px; }
 
-        /* 大廳模組選項鍵 (Dashboard Grid) */
-        .dashboard-wrapper { padding-top: 10px; }
-        .greeting-text { color: #ffffff; text-shadow: 1px 1px 4px rgba(0,0,0,0.8); font-size: 20px; font-weight: 800; text-align: left; margin-left: 5px; margin-bottom: 25px; }
-        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; box-sizing: border-box; }
+        .dashboard-wrapper { padding-top: 20px; }
+        .greeting-text { color: #ffffff; text-shadow: 1px 1px 4px rgba(0,0,0,0.6); font-size: 20px; line-height: 1.5; font-weight: 800; text-align: left; margin-left: 5px; margin-bottom: 25px; }
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; }
         
         .dash-btn {
             border-radius: 20px; padding: 22px; color: white; cursor: pointer; text-align: left; position: relative; overflow: hidden;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3); transition: transform 0.2s, box-shadow 0.2s;
-            min-height: 130px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid rgba(255,255,255,0.25);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2); transition: transform 0.2s, box-shadow 0.2s;
+            min-height: 130px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid rgba(255,255,255,0.2);
         }
-        .dash-btn:hover { transform: translateY(-4px); box-shadow: 0 15px 25px rgba(0,0,0,0.4); }
+        .dash-btn:hover { transform: translateY(-4px); box-shadow: 0 15px 20px -5px rgba(0,0,0,0.3); }
         .dash-btn.disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(80%); }
-        .dash-icon { font-size: 36px; font-weight: bold; margin-bottom: 5px; text-shadow: 1px 1px 3px rgba(0,0,0,0.4); }
-        .dash-title { font-size: 20px; font-weight: 800; margin-bottom: 4px; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); }
-        .dash-desc { font-size: 13px; opacity: 0.95; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); }
+        .dash-icon { font-size: 32px; font-weight: bold; margin-bottom: 5px; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
+        .dash-title { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+        .dash-desc { font-size: 12px; opacity: 0.9; font-weight: bold; }
 
         .bg-purple { background: linear-gradient(135deg, #7c3aed, #a855f7); } 
-        .bg-orange { background: linear-gradient(135deg, #f59e0b, #fcd34d); color: #0f172a; } 
-        .bg-orange .dash-title, .bg-orange .dash-desc { color: #0f172a; text-shadow: none; }
+        .bg-orange { background: linear-gradient(135deg, #f59e0b, #fcd34d); } 
         .bg-teal   { background: linear-gradient(135deg, #0d9488, #2dd4bf); } 
         .bg-blue   { background: linear-gradient(135deg, #0284c7, #38bdf8); } 
 
-        /* 進度條與舞台 */
-        .progress-banner { background: rgba(0, 0, 0, 0.35); padding: 15px 20px; border-radius: 12px; font-weight: bold; display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; box-sizing: border-box; color: white; border: 1px solid rgba(255,255,255,0.15); }
+        .progress-banner { background: rgba(255, 255, 255, 0.2); padding: 15px 20px; border-radius: 12px; font-weight: bold; display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; box-sizing: border-box; color: white; }
         .progress-banner-header { display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box; }
-        .progress-bar-container { background: rgba(255,255,255,0.2); width: 100%; height: 10px; border-radius: 10px; overflow: hidden; box-sizing: border-box; }
+        .progress-bar-container { background: rgba(255,255,255,0.3); width: 100%; height: 10px; border-radius: 10px; overflow: hidden; box-sizing: border-box; }
         .progress-bar-fill { background: var(--success); width: 0%; height: 100%; transition: width 0.4s ease; }
         
         .stage-box { background: var(--stage-bg); border-radius: 16px; padding: 25px; margin: 20px 0; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 140px; text-align: center; font-size: 28px; font-weight: bold; letter-spacing: 1px; line-height: 1.6; border: 1px solid rgba(255,255,255,0.15); }
@@ -128,31 +114,34 @@
         .teaching-column { flex: 1; background: var(--glass-bg); border: var(--glass-border); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); padding: 20px; border-radius: 14px; box-sizing: border-box; color: white; }
         .teaching-column h3 { text-align: left; }
 
-        .math-step-box { font-family: monospace; background: #1e293b; color: #00ff00; padding: 15px; border-radius: 8px; font-size: 16px; line-height: 2.2; border: 1px solid rgba(255,255,255,0.15); }
+        .math-step-box { font-family: monospace; background: #222; color: #00ff00; padding: 15px; border-radius: 6px; font-size: 16px; line-height: 2.2; border: 1px solid rgba(255,255,255,0.1); }
         .math-step-box .step-line { margin-bottom: 10px; display: block; padding: 4px 8px; }
-        .math-step-box .active-line { background: #334155; color: #fffb00; font-weight: bold; border-radius: 4px; border-left: 4px solid var(--warning); }
+        .math-step-box .active-line { background: #333; color: #fffb00; font-weight: bold; border-radius: 4px; border-left: 4px solid var(--warning); }
         
         .camp-tip { font-size: 14px; color: #f1f5f9; background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; border-left: 4px solid var(--primary); margin-bottom: 10px; }
         .timer-badge { background: var(--danger); color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; display: none; }
-        .math-native-expr { font-size: 1.3em; color: #fffb00; font-weight: bold; letter-spacing: 1px; }
+        
+        .math-expr-wrapper { display: inline-flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px; vertical-align: middle; }
+        .math-native-expr { font-size: 1.2em; color: #fffb00; font-weight: bold; letter-spacing: 1px; }
 
         table.stats-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; background: rgba(255,255,255,0.95); border-radius: 12px; overflow: hidden; color: #0f172a; }
         table.stats-table th, table.stats-table td { border: 1px solid #cbd5e1; padding: 10px; text-align: center; }
         table.stats-table th { background: #e2e8f0; color: #1e293b; font-weight: bold; }
         table.stats-table tr.section-title th { background: #2b5797; color: white; text-align: left; padding-left: 15px; }
         
-        @media (max-width: 768px) { .dashboard-grid { grid-template-columns: 1fr; } }
         @media print { .non-print, button, .top-right-nav, .top-left-nav { display: none !important; } .step-panel { display: none !important; } #step_stats_panel { display: block !important; } }
     </style>
 </head>
 <body>
 
+<div id="loadingOverlay" class="loading-overlay" style="display: none;"><div class="spinner"></div><p id="loadingText" style="margin-top:15px;font-weight:bold;">連線中...</p></div>
 <div id="topLeftNav" class="top-left-nav"><button id="dynamicNavBtn" class="top-nav-btn" onclick="handleTopLeftNav()">&lt; 返回學習大廳</button></div>
 <div id="topCenterAccount" class="top-center-account"></div>
 <div id="topRightNav" class="top-right-nav"><button class="top-nav-btn logout-btn-text" onclick="logoutSession()" title="登出">🚪 登出</button></div>
 
+<!-- 修正了這裡的 container 被隱藏後沒解開的 Bug -->
 <div class="container" id="mainContainer" style="display: none;">
-    <!-- 模組主選單 (dashboard-grid 質感卡片對齊) -->
+    
     <div id="step1" class="step-panel dashboard-wrapper">
         <div class="greeting-text">請選擇多項式挑戰模式</div>
         <div class="dashboard-grid">
@@ -175,13 +164,9 @@
         </div>
     </div>
 
-    <!-- 闖關模式設定 -->
     <div id="step1_challenge" class="step-panel">
         <h2>🎮 闖關模式設定</h2>
-        <div class="form-group">
-            <label for="typeSelect">🧭 題目難度結構：</label>
-            <select id="typeSelect" title="選擇題型"></select>
-        </div>
+        <div class="form-group"><label for="typeSelect">🧭 題目難度結構：</label><select id="typeSelect" title="選擇題型"></select></div>
         <div class="form-group">
             <label>終點條件：</label>
             <div class="radio-group">
@@ -189,31 +174,23 @@
                 <label><input type="radio" name="endCondition" value="TIME_LIMIT" onchange="toggleConditionUI()"> ⏳ 限時瘋狂衝分模式</label>
             </div>
         </div>
-        <div class="form-group" id="countInputWrapper">
-            <label for="totalQuestionsInput">🔢 挑戰題數：</label>
-            <input type="number" id="totalQuestionsInput" value="5" min="1" max="25" title="挑戰題數" placeholder="題數">
-        </div>
+        <div class="form-group" id="countInputWrapper"><label for="totalQuestionsInput">🔢 挑戰題數：</label><input type="number" id="totalQuestionsInput" value="5" min="1" max="25" title="挑戰題數" placeholder="題數"></div>
         <div class="form-group" id="timeLimitInputWrapper" style="display: none;">
             <label for="timeLimitSelect">⏱️ 限制時間選擇：</label>
-            <select id="timeLimitSelect" title="限制時間">
-                <option value="180" selected>3 分鐘衝刺賽</option>
-                <option value="300">5 分鐘標準賽</option>
-            </select>
+            <select id="timeLimitSelect" title="限制時間"><option value="180">3 分鐘快速賽</option><option value="300" selected>5 分鐘標準賽</option></select>
         </div>
         <button onclick="initChallengeSession()" class="btn-success">🎲 生成關卡，出發！</button>
     </div>
 
-    <!-- 有問必答計算機 -->
     <div id="step1_solver" class="step-panel">
         <h2>🛠️ 多項式有問必答 (自訂化簡)</h2>
         <div class="form-group">
-            <label for="polyInput">✏️ 請輸入多項式算式（例如 `(3x + 8) + (2x + 5)` 或 `(2x² + 3x) - (x² - 5x)`）：</label>
+            <label for="polyInput">✏️ 請輸入多項式算式（例如 `(3x + 8) + (2x + 5)`）：</label>
             <input type="text" id="polyInput" placeholder="例如: (3x + 8) + (2x + 5)" autocomplete="off">
         </div>
         <button onclick="handleManualSolverInput()" class="btn-success">開始多項式化簡引導</button>
     </div>
 
-    <!-- 作答舞台面板 -->
     <div id="step2" class="step-panel">
         <div class="progress-banner">
             <div class="progress-banner-header">
@@ -246,7 +223,6 @@
         </div>
     </div>
 
-    <!-- 推導黑板 -->
     <div id="step3" class="step-panel">
         <div class="progress-banner">
             <div class="progress-banner-header">
@@ -258,7 +234,7 @@
             </div>
             <div class="progress-bar-container"><div id="progressBarFillStage3" class="progress-bar-fill"></div></div>
         </div>
-        <h2>🔮 多項式智能逐步推導</h2>
+        <h2 id="step3HeadingTitle">多項式智能逐步推導</h2>
         <div class="stage-box" id="interactiveStageBox">展示台</div>
         <div id="feedbackArea" class="feedback"></div>
         <button id="solveBtn" class="btn-warning" onclick="startInteractiveSolving()">🔮 啟動逐步推導教學黑板</button>
@@ -291,9 +267,18 @@
         <button id="nextBtn" class="btn-success" onclick="advanceQuestion()" style="display:none;margin-top:20px;">前進下一題 ➡️</button>
     </div>
 
-    <!-- 學習報告面板 -->
     <div id="step_stats_panel" class="step-panel">
         <h2 id="reportMainHeading">📊 學生多項式化簡學習報告</h2>
+        
+        <div id="teacherQueryZone" class="non-print" style="background: rgba(243, 232, 255, 0.8); padding: 15px; border-radius: 16px; border: 2px dashed #8b5cf6; margin-bottom: 20px; display: none;">
+            <p style="margin: 0 0 10px 0; font-weight: bold; color: #6b21a8; font-size: 15px;">🔍 教師跨系統權限調閱模組</p>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                <select id="queryClass" style="width: 130px; padding: 8px; font-size: 15px;"></select>
+                <select id="querySeat" style="width: 100px; padding: 8px; font-size: 15px;"></select>
+                <button onclick="loadTargetStudentDataByTeacher()" class="btn-purple" style="width: auto; padding: 8px 16px; margin: 0;">提取個案</button>
+            </div>
+        </div>
+
         <div id="printOutputRenderZone">
             <div class="print-student-page">
                 <h3 id="printStudentInfo" style="text-align:left;margin-bottom:10px;">學生班別：載入中...</h3>
@@ -328,11 +313,8 @@
     let currentRole = "STUDENT", userRawClass = "", userRawSeat = "";
     let currentPanelId = "step1"; 
     let currentEngine = "SIMPLIFY"; 
-    let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, timeLimitSetting: 300, score: 0, currentIdx: 0, questionList: [], selectedType: 'MIX', currentTypeNum: 1, wrongAttemptsThisQuestion: 0, wrongAttemptsInTeaching: 0 };
-    let polyData = { rawExpr: "", ansStr: "", type: "ADD", texExpr: "", texAns: "", p1: "", op: "", p2: "", a1:0, b1:0, c1:0, a2:0, b2:0, c2:0, ansA:0, ansB:0, ansC:0, isQuad: true };
-    let timerInterval = null; let timeLeft = 0;
-    let wrongQuestionBank = [];
-
+    
+    // 強制完整預設結構，防止 undefined 錯誤
     let cacheStorage = {
         SIMPLIFY: { 
             wrongBook: [], 
@@ -342,8 +324,14 @@
                 3: { name: "(ax + b) - (cx + d) 【單變數一次減法】", total: 0, firstMatch: 0, retryMatch: 0, failed: 0 },
                 4: { name: "ax^2 + bx + c 二次多項式綜合挑戰賽", total: 0, firstMatch: 0, retryMatch: 0, failed: 0 }
             } 
-        }
+        },
+        MULTIPLY: { wrongBook: [], stats: { 1: { name: "多項式展開", total: 0, firstMatch: 0, retryMatch: 0, failed: 0 } } }
     };
+
+    let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, timeLimitSetting: 300, score: 0, currentIdx: 0, questionList: [], selectedType: 'MIX', currentTypeNum: 1, wrongAttemptsThisQuestion: 0, wrongAttemptsInTeaching: 0 };
+    let polyData = { rawExpr: "", ansStr: "", type: "ADD", texExpr: "", texAns: "", p1: "", op: "", p2: "", a1:0, b1:0, c1:0, a2:0, b2:0, c2:0, ansA:0, ansB:0, ansC:0, isQuad: true };
+    let timerInterval = null; let timeLeft = 0;
+    let wrongQuestionBank = [];
 
     document.addEventListener('DOMContentLoaded', function() {
         let savedRole = localStorage.getItem("Active_User_Role"); if (!savedRole) { window.location.replace("index.html"); return; }
@@ -359,6 +347,13 @@
             } else if (currentRole === "GUEST") {
                 badge.innerText = `挑戰者: 訪客體驗`;
                 setupLayoutForStudent();
+            } else if (currentRole === "TEACHER") {
+                let teacherId = localStorage.getItem("Active_User_TeacherID") || "Teacher_01";
+                badge.innerText = `管理員: ${teacherId.replace('Teacher_','')}`;
+                let qZone = document.getElementById('teacherQueryZone');
+                if(qZone) qZone.style.display = "block";
+                buildTeacherQueryOptions();
+                document.querySelectorAll('.id-student-only').forEach(el => el.style.display = "none");
             }
         }
         renderTypeSelectOptions(); updateReviewMenuUI(); showPanel('step1');
@@ -370,7 +365,7 @@
             let local = localStorage.getItem(cacheKey);
             if(local) {
                 let p = JSON.parse(local);
-                if(p.SIMPLIFY && p.SIMPLIFY.stats) { cacheStorage = p; wrongQuestionBank = cacheStorage.SIMPLIFY.wrongBook || []; }
+                if(p.SIMPLIFY && p.SIMPLIFY.stats && p.SIMPLIFY.stats[1]) { cacheStorage = p; wrongQuestionBank = cacheStorage.SIMPLIFY.wrongBook || []; }
             }
         } catch(e) {}
         
@@ -380,10 +375,8 @@
                 let data = await res.json();
                 if(data && data.cacheData) {
                     let parsedData = JSON.parse(data.cacheData);
-                    if(parsedData.SIMPLIFY && parsedData.SIMPLIFY.stats) {
-                        cacheStorage = parsedData;
-                        localStorage.setItem(cacheKey, data.cacheData);
-                        wrongQuestionBank = cacheStorage.SIMPLIFY.wrongBook || [];
+                    if(parsedData.SIMPLIFY && parsedData.SIMPLIFY.stats && parsedData.SIMPLIFY.stats[1]) {
+                        cacheStorage = parsedData; localStorage.setItem(cacheKey, data.cacheData); wrongQuestionBank = cacheStorage.SIMPLIFY.wrongBook || [];
                     }
                 }
             }
@@ -408,21 +401,32 @@
 
     function setupLayoutForStudent() { document.querySelectorAll('.id-student-only').forEach(el => el.style.display = "flex"); updateReviewMenuUI(); }
     
+    function buildTeacherQueryOptions() {
+        const qC = document.getElementById('queryClass'); const qS = document.getElementById('querySeat');
+        if(!qC || !qS) return; qC.innerHTML = ""; qS.innerHTML = "";
+        for(let g=1; g<=6; g++) ['A','B','C','D'].forEach(l => qC.innerHTML+=`<option value="${g}${l}">${g}${l}班</option>`);
+        for(let i=1; i<=35; i++) qS.innerHTML+=`<option value="${i}">${i}號</option>`;
+    }
+
     function renderTypeSelectOptions() {
         let ts = document.getElementById('typeSelect');
         if(ts) ts.innerHTML = `<option value="LINEAR">1. 一次多項式加減 (題型1-3)</option><option value="QUAD">2. 二次多項式加減 (題型4)</option><option value="MIX" selected>3. 🔀 混合全題型挑戰</option>`;
     }
 
+    // 修復這裡：精準控制 mainContainer 的 display
     function showPanel(id) {
         document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
         const targetPanel = document.getElementById(id);
-        if (targetPanel) targetPanel.classList.add('active');
-        currentPanelId = id;
-        
-        let navLeft = document.getElementById('topLeftNav');
-        if (navLeft) { navLeft.style.display = 'block'; document.getElementById('dynamicNavBtn').innerText = (id === 'step1') ? "< 返回學習大廳" : "< 返回主目錄"; }
-        let navRight = document.getElementById('topRightNav');
-        if (navRight) navRight.style.display = 'block';
+        if (targetPanel) {
+            targetPanel.classList.add('active');
+            document.getElementById('mainContainer').style.display = 'block'; // 關鍵修復點
+            currentPanelId = id;
+            
+            let navLeft = document.getElementById('topLeftNav');
+            if (navLeft) { navLeft.style.display = 'block'; document.getElementById('dynamicNavBtn').innerText = (id === 'step1') ? "< 返回學習大廳" : "< 返回主目錄"; }
+            let navRight = document.getElementById('topRightNav');
+            if (navRight) navRight.style.display = 'block';
+        }
     }
 
     function handleTopLeftNav() {
@@ -458,18 +462,53 @@
         } catch(e) { console.error(e); }
     }
 
+    function pushTeacherRecord(mod) {
+        if(currentRole !== 'STUDENT') return;
+        try {
+            let record = { class: userRawClass, seat: userRawSeat, module: mod, score: session.score, timestamp: new Date().toLocaleString("zh-HK", {hour12:false}) };
+            let r = JSON.parse(localStorage.getItem('MathSystem_Student_Records') || '[]');
+            r.unshift(record); if(r.length>200) r.pop(); localStorage.setItem('MathSystem_Student_Records', JSON.stringify(r));
+
+            let params = new URLSearchParams(); params.append('type', 'RECORD'); params.append('class', record.class); params.append('seat', record.seat); params.append('module', record.module); params.append('score', record.score); params.append('timestamp', record.timestamp);
+            fetch(GAS_API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params.toString() }).catch(e=>{});
+        } catch(e){}
+    }
+
+    function calculateAndRenderStats() {
+        pushTeacherRecord('多項式化簡與展開');
+        const tb = document.getElementById('statsTableBody'); if(!tb) return; tb.innerHTML = "";
+
+        const modules = [{ key: "SIMPLIFY", name: "多項式化簡常規模組" }];
+        modules.forEach(m => {
+            let tr = document.createElement('tr'); tr.className = "section-title"; tr.innerHTML = `<th colspan="7">🌀 ${m.name}</th>`; tb.appendChild(tr);
+            let sObj = cacheStorage[m.key].stats;
+            for(let k in sObj) {
+                let r = sObj[k]; let t = r.total; let fRate = t > 0 ? Math.round((r.firstMatch / t) * 100) + '%' : '0%'; let cRate = t > 0 ? Math.round(((r.firstMatch + r.retryMatch) / t) * 100) + '%' : '0%';
+                tb.innerHTML += `<tr><td style='text-align:left; font-weight:bold; padding-left:15px;'>${r.name}</td><td>${t}</td><td style='color:#10b981; font-weight:bold;'>${r.firstMatch}</td><td style='color:#f59e0b;'>${r.retryMatch}</td><td style='color:#ef4444;'>${r.failed}</td><td style='background:#f0fdf4; font-weight:bold; color:#10b981;'>${fRate}</td><td style='background:#eff6ff; font-weight:bold; color:#3b82f6;'>${cRate}</td></tr>`;
+            }
+        });
+        document.getElementById('statsWrongCount').innerText = wrongQuestionBank.length;
+        document.getElementById('printStudentInfo').innerHTML = `<span class="info-span">學生班別：${userRawClass} 班</span><span class="info-span">學號：${userRawSeat} 號</span>`;
+        document.getElementById('printDate').innerText = `產出時間：` + new Date().toLocaleString();
+    }
+
+    function loadTargetStudentDataByTeacher() {
+        let tc = document.getElementById('queryClass').value; let ts = document.getElementById('querySeat').value;
+        userRawClass = tc; userRawSeat = ts;
+        initLocalFallback(userRawClass, userRawSeat).then(() => {
+            calculateAndRenderStats(); alert(`🎉 成功撈取 ${tc}班 ${ts}號 的雲端歷程檔案！已更新數據報表。`);
+        });
+    }
+
     function fmtTerm(coef, variable, isFirst) {
         if (coef === 0) return "";
-        let sign = coef > 0 ? (isFirst ? "" : "+") : "-"; let absCoef = Math.abs(coef);
-        let coefStr = (absCoef === 1 && variable !== "") ? "" : absCoef;
-        return sign + coefStr + variable;
+        let sign = coef > 0 ? (isFirst ? "" : "+") : "-"; let absCoef = Math.abs(coef); let coefStr = (absCoef === 1 && variable !== "") ? "" : absCoef; return sign + coefStr + variable;
     }
 
     function generatePolynomialQuestion(mode) {
         let typeNum = (mode === 'LINEAR') ? Math.floor(Math.random() * 3) + 1 : ((mode === 'QUAD') ? 4 : Math.floor(Math.random() * 4) + 1);
         let p1Str = "", p2Str = "", ansStr = "", op = "+";
         let randNonZero = (min,max) => { let r=0; while(r===0) r=Math.floor(Math.random()*(max-min+1))+min; return r; };
-        
         let localData = {a1:0, b1:0, c1:0, a2:0, b2:0, c2:0, ansA:0, ansB:0, ansC:0, isQuad:false};
         session.currentTypeNum = typeNum;
 
@@ -486,8 +525,7 @@
         } else {
             let a=randNonZero(-4,4), b=Math.floor(Math.random()*11)-5, c=Math.floor(Math.random()*13)-6, d=randNonZero(-4,4), e=Math.floor(Math.random()*11)-5, f=Math.floor(Math.random()*13)-6;
             while(a+d===0) d=randNonZero(-4,4); op="+";
-            p1Str = fmtTerm(a,"x^2",true) + fmtTerm(b,"x",false) + fmtTerm(c,"",false);
-            p2Str = fmtTerm(d,"x^2",true) + fmtTerm(e,"x",false) + fmtTerm(f,"",false);
+            p1Str = fmtTerm(a,"x^2",true) + fmtTerm(b,"x",false) + fmtTerm(c,"",false); p2Str = fmtTerm(d,"x^2",true) + fmtTerm(e,"x",false) + fmtTerm(f,"",false);
             let ansA=a+d, ansB=b+e, ansC=c+f; ansStr = fmtTerm(ansA,"x^2",true) + fmtTerm(ansB,"x",ansA === 0) + fmtTerm(ansC,"",ansA === 0 && ansB === 0);
             localData = {a1:a,b1:b,c1:c, a2:d,b2:e,c2:f, ansA:ansA,ansB:ansB,ansC:ansC, isQuad:true};
         }
@@ -515,82 +553,51 @@
             stopSessionTimer(); 
             let input = document.getElementById('polyInput').value.trim() || "(3x + 8) + (2x + 5)";
             let cleanInput = input.replace(/²/g, '^2').replace(/\s+/g, '').replace(/\(/g, '').replace(/\)/g, '');
-            
             let p1 = "", p2 = "", op = "+"; currentEngine = "SIMPLIFY"; session.currentTypeNum = 1;
+            
             if (input.replace(/\s+/g, '').includes(')+(') || input.replace(/\s+/g, '').includes(')-(')) {
                 let normInput = input.replace(/\s+/g, ''); op = normInput.includes(')-(') ? '-' : '+';
-                let parts = normInput.split(op === '+' ? ')+(' : ')-(');
-                p1 = parts[0].replace('(', ''); p2 = parts[1] ? parts[1].replace(')', '') : "0";
+                let parts = normInput.split(op === '+' ? ')+(' : ')-('); p1 = parts[0].replace('(', ''); p2 = parts[1] ? parts[1].replace(')', '') : "0";
             } else {
                 let match = cleanInput.match(/^([+-]?\d*[a-zA-Z]\^?\d*[+-]\d+)([+-])([+-]?\d*[a-zA-Z].*)$/);
                 if (match) { p1 = match[1]; op = match[2]; p2 = match[3]; } 
-                else {
-                    let midMatch = cleanInput.match(/(.+?)([+-])([+-]?\d*[a-zA-Z].*)/);
-                    if (midMatch) { p1 = midMatch[1]; op = midMatch[2]; p2 = midMatch[3]; } 
-                    else { p1 = cleanInput; op = "+"; p2 = "0"; }
-                }
+                else { let midMatch = cleanInput.match(/(.+?)([+-])([+-]?\d*[a-zA-Z].*)/); if (midMatch) { p1 = midMatch[1]; op = midMatch[2]; p2 = midMatch[3]; } else { p1 = cleanInput; op = "+"; p2 = "0"; } }
             }
             
             let parseCoefs = (str) => {
                 let a = 0, b = 0, c = 0; let clean = str.replace(/\+/g, '++').replace(/-/g, '+-'); let parts = clean.split('+');
-                parts.forEach(t => {
-                    if(!t) return;
-                    if (t.includes('x^2')) { let co = t.replace('x^2', ''); a += (co === "" || co === "+") ? 1 : (co === "-" ? -1 : parseInt(co)); }
-                    else if (t.includes('x') || t.includes('y')) { let co = t.replace(/[xy]/, ''); b += (co === "" || co === "+") ? 1 : (co === "-" ? -1 : parseInt(co)); }
-                    else { let parsed = parseInt(t); if(!isNaN(parsed)) c += parsed; }
-                }); return [a, b, c];
+                parts.forEach(t => { if(!t) return; if (t.includes('x^2')) { let co = t.replace('x^2', ''); a += (co === "" || co === "+") ? 1 : (co === "-" ? -1 : parseInt(co)); } else if (t.includes('x') || t.includes('y')) { let co = t.replace(/[xy]/, ''); b += (co === "" || co === "+") ? 1 : (co === "-" ? -1 : parseInt(co)); } else { let parsed = parseInt(t); if(!isNaN(parsed)) c += parsed; } }); return [a, b, c];
             };
 
             let c1 = parseCoefs(p1); let c2 = parseCoefs(p2);
-            let ansA = (op === '+') ? (c1[0] + c2[0]) : (c1[0] - c2[0]);
-            let ansB = (op === '+') ? (c1[1] + c2[1]) : (c1[1] - c2[1]);
-            let ansC = (op === '+') ? (c1[2] + c2[2]) : (c1[2] - c2[2]);
+            let ansA = (op === '+') ? (c1[0] + c2[0]) : (c1[0] - c2[0]); let ansB = (op === '+') ? (c1[1] + c2[1]) : (c1[1] - c2[1]); let ansC = (op === '+') ? (c1[2] + c2[2]) : (c1[2] - c2[2]);
+            let ansStr = ""; if(ansA !== 0) ansStr += fmtTerm(ansA, "x^2", true); if(ansB !== 0) ansStr += fmtTerm(ansB, "x", ansA === 0); if(ansC !== 0 || ansStr === "") ansStr += fmtTerm(ansC, "", ansA === 0 && ansB === 0);
             
-            let ansStr = "";
-            if(ansA !== 0) ansStr += fmtTerm(ansA, "x^2", true);
-            if(ansB !== 0) ansStr += fmtTerm(ansB, "x", ansA === 0);
-            if(ansC !== 0 || ansStr === "") ansStr += fmtTerm(ansC, "", ansA === 0 && ansB === 0);
-            
-            polyData.a1 = c1[0]; polyData.b1 = c1[1]; polyData.c1 = c1[2]; polyData.a2 = c2[0]; polyData.b2 = c2[1]; polyData.c2 = c2[2];
-            polyData.ansA = ansA; polyData.ansB = ansB; polyData.ansC = ansC; polyData.isQuad = (c1[0] !== 0 || c2[0] !== 0);
-
-            session.questionList = [`(${p1})${op}(${p2})|${ansStr}|${p1}|${op}|${p2}|${c1.join(',')}|${c2.join(',')}|${ansA},${ansB},${ansC}|${polyData.isQuad?1:0}|4`]; 
-            session.currentIdx = 0; loadQuestionToStage();
-        } catch(e) {
-            session.questionList = ["(3x+8)+(2x+5)|5x+13|3x+8|+|2x+5|0,3,8|0,2,5|0,5,13|0|4"]; session.currentIdx = 0; loadQuestionToStage();
-        }
+            polyData.a1 = c1[0]; polyData.b1 = c1[1]; polyData.c1 = c1[2]; polyData.a2 = c2[0]; polyData.b2 = c2[1]; polyData.c2 = c2[2]; polyData.ansA = ansA; polyData.ansB = ansB; polyData.ansC = ansC; polyData.isQuad = (c1[0] !== 0 || c2[0] !== 0);
+            session.questionList = [`(${p1})${op}(${p2})|${ansStr}|${p1}|${op}|${p2}|${c1.join(',')}|${c2.join(',')}|${ansA},${ansB},${ansC}|${polyData.isQuad?1:0}|4`]; session.currentIdx = 0; loadQuestionToStage();
+        } catch(e) { session.questionList = ["(3x+8)+(2x+5)|5x+13|3x+8|+|2x+5|0,3,8|0,2,5|0,5,13|0|4"]; session.currentIdx = 0; loadQuestionToStage(); }
     }
 
     function loadQuestionToStage() {
         try {
-            document.getElementById('ansInput').value = '';
-            document.getElementById('ansInput').disabled = false;
-            document.getElementById('retryInputWrapper').style.display = 'none';
-            document.getElementById('initialFeedbackArea').innerHTML = '';
+            document.getElementById('ansInput').value = ''; document.getElementById('ansInput').disabled = false;
+            document.getElementById('retryInputWrapper').style.display = 'none'; document.getElementById('initialFeedbackArea').innerHTML = '';
             
             let parts = session.questionList[session.currentIdx].split('|');
             polyData.texExpr = parts[0]; polyData.ansStr = parts[1]; polyData.texAns = parts[1];
             polyData.p1 = parts[2]; polyData.op = parts[3]; polyData.p2 = parts[4];
-            let c1 = parts[5].split(',').map(Number); polyData.a1=c1[0]; polyData.b1=c1[1]; polyData.c1=c1[2];
-            let c2 = parts[6].split(',').map(Number); polyData.a2=c2[0]; polyData.b2=c2[1]; polyData.c2=c2[2];
-            let c3 = parts[7].split(',').map(Number); polyData.ansA=c3[0]; polyData.ansB=c3[1]; polyData.ansC=c3[2];
             
             document.getElementById('scoreText').innerText = `目前積分: ${session.score} 分`;
             session.wrongAttemptsThisQuestion = 0; session.wrongAttemptsInTeaching = 0;
 
             if(session.currentMode === 'CHALLENGE' && cacheStorage.SIMPLIFY.stats[session.currentTypeNum]) {
-                cacheStorage.SIMPLIFY.stats[session.currentTypeNum].total++;
-                cloudSaveData();
+                cacheStorage.SIMPLIFY.stats[session.currentTypeNum].total++; cloudSaveData();
             }
             
             const step2Title = document.getElementById('step2Title');
             if(step2Title) step2Title.innerText = (session.currentMode === 'REVIEW') ? "👹 魔王錯題重溫挑戰" : "請將以下多項式進行化簡";
 
-            setTimeout(() => { 
-                document.getElementById('displayPoly').innerHTML = convertToNativeSup(polyData.texExpr); 
-                showPanel('step2'); 
-                updateProgressBarUI();
-            }, 0);
+            setTimeout(() => { document.getElementById('displayPoly').innerHTML = convertToNativeSup(polyData.texExpr); showPanel('step2'); updateProgressBarUI(); }, 0);
         } catch(e) { console.error(e); showPanel('step2'); }
     }
 
@@ -634,9 +641,7 @@
                 let area = document.getElementById('initialFeedbackArea'); area.className="feedback warning"; 
                 area.innerHTML = "❌ 答案不太對喔！<b>首答不扣分</b>。請在下方開闢的<b>補答欄位</b>重新核對修正答案！";
             } else {
-                if(session.currentMode === 'CHALLENGE') session.score--; 
-                document.getElementById('scoreText').innerText = `目前積分: ${session.score} 分`; 
-                updateProgressBarUI(); showPanel('step3'); executeFinalFailure();
+                if(session.currentMode === 'CHALLENGE') session.score--; document.getElementById('scoreText').innerText = `目前積分: ${session.score} 分`; updateProgressBarUI(); showPanel('step3'); executeFinalFailure();
             }
             cloudSaveData(); updateReviewMenuUI();
         }
@@ -651,11 +656,9 @@
             session.score++; document.getElementById('scoreText').innerText = `目前積分: ${session.score} 分`; updateProgressBarUI(); 
             f.innerHTML="🎉 恭喜完全正確！你對去括號與同類項合併掌握得非常優秀！"; 
         } else if(session.currentMode==='REVIEW') { 
-            wrongQuestionBank = wrongQuestionBank.filter(i=>i!==session.questionList[session.currentIdx]); 
-            cacheStorage.SIMPLIFY.wrongBook = wrongQuestionBank;
+            wrongQuestionBank = wrongQuestionBank.filter(i=>i!==session.questionList[session.currentIdx]); cacheStorage.SIMPLIFY.wrongBook = wrongQuestionBank;
             f.innerHTML="🎉 成功擊破多項式錯題！該題已從小本本順利消滅！"; 
         } else f.innerHTML="🎉 計算完全正確！概念非常精準。";
-        
         cloudSaveData(); updateReviewMenuUI(); setupNextButtonLabel();
     }
 
@@ -676,36 +679,21 @@
     function verifyStep1() {
         let val = document.getElementById('step1Input').value.trim();
         let p2Neg = polyData.p2;
-        if (polyData.op === '-') {
-            if (!p2Neg.startsWith('-')) p2Neg = '+' + p2Neg;
-            p2Neg = p2Neg.replace(/\+/g, 'TEMP_PLUS').replace(/-/g, '+').replace(/TEMP_PLUS/g, '-');
-        } else {
-            if (!p2Neg.startsWith('-') && !p2Neg.startsWith('+')) p2Neg = '+' + p2Neg;
-        }
+        if (polyData.op === '-') { if (!p2Neg.startsWith('-')) p2Neg = '+' + p2Neg; p2Neg = p2Neg.replace(/\+/g, 'TEMP_PLUS').replace(/-/g, '+').replace(/TEMP_PLUS/g, '-'); } else { if (!p2Neg.startsWith('-') && !p2Neg.startsWith('+')) p2Neg = '+' + p2Neg; }
         let rawStep1 = polyData.p1 + p2Neg;
         
         if(UX(val) === UX(rawStep1)) {
-            alert("🎯 去括號展開正確！"); 
-            document.getElementById('interactiveStageBox').innerHTML = `展開項：${convertToNativeSup(val)}`;
-            document.getElementById('stageCombineArea').style.display="none"; 
-            document.getElementById('stageFinalArea').style.display="block"; 
-            renderMathSteps(2);
-        } else {
-            session.wrongAttemptsInTeaching++; alert("❌ 去括號展開不對哦，注意負號與變數符號！");
-            checkTeachingWrongCounter('teachingWrongArea1');
-        }
+            alert("🎯 去括號展開正確！"); document.getElementById('interactiveStageBox').innerHTML = `展開項：${convertToNativeSup(val)}`;
+            document.getElementById('stageCombineArea').style.display="none"; document.getElementById('stageFinalArea').style.display="block"; renderMathSteps(2);
+        } else { session.wrongAttemptsInTeaching++; alert("❌ 去括號展開不對哦，注意負號與變數符號！"); checkTeachingWrongCounter('teachingWrongArea1'); }
     }
 
     function verifyStep2() {
         let val = document.getElementById('step2Input').value.trim();
         if(UX(val) === UX(polyData.ansStr)) {
             document.getElementById('interactiveStageBox').innerHTML = `<span style="white-space: nowrap;">🔮 化簡成功：<span style="color:#00ff00; font-weight:900;">${convertToNativeSup(polyData.ansStr)}</span></span>`;
-            document.getElementById('stageFinalArea').style.display="none"; document.getElementById('nextBtn').style.display="block";
-            setupNextButtonLabel(); renderMathSteps(3);
-        } else {
-            session.wrongAttemptsInTeaching++; alert("❌ 同類項合併計算錯誤！");
-            checkTeachingWrongCounter('teachingWrongArea2');
-        }
+            document.getElementById('stageFinalArea').style.display="none"; document.getElementById('nextBtn').style.display="block"; setupNextButtonLabel(); renderMathSteps(3);
+        } else { session.wrongAttemptsInTeaching++; alert("❌ 同類項合併計算錯誤！"); checkTeachingWrongCounter('teachingWrongArea2'); }
     }
 
     function renderMathSteps(code) {
@@ -716,11 +704,11 @@
         box.innerHTML = html;
     }
 
+    // 【防卡死密鑰展現機制】
     function checkTeachingWrongCounter(targetAreaId) { 
         let area = document.getElementById(targetAreaId); 
-        if (session.wrongAttemptsInTeaching >= 3) { 
-            area.innerHTML = `<div style="margin-top:10px; padding:10px; background:#fef2f2; border-left:4px solid var(--danger); border-radius:6px; font-weight:bold; color:var(--danger);">💡 防卡死密鑰：<button class='btn-warning' style='width:auto;padding:4px 8px;font-size:12px;margin-left:10px;' onclick='alert("💡 最終結果為 ${polyData.ansStr}")'>🔓 直接秀出答案</button></div>`; 
-        } else { area.innerHTML = ""; } 
+        if (session.wrongAttemptsInTeaching >= 3) { area.innerHTML = `<div style="margin-top:10px; padding:10px; background:#fef2f2; border-left:4px solid var(--danger); border-radius:6px; font-weight:bold; color:var(--danger);">💡 防卡死密鑰：<button class='btn-warning' style='width:auto;padding:4px 8px;font-size:12px;margin-left:10px;' onclick='alert("💡 最終結果為 ${polyData.ansStr}")'>🔓 直接秀出答案</button></div>`; } 
+        else { area.innerHTML = ""; } 
     }
 
     function setupNextButtonLabel() { 
@@ -732,14 +720,11 @@
 
     function advanceQuestion() { 
         if(session.currentMode==='CHALLENGE') { 
-            if(session.endCondition==='COUNT') { 
-                if(session.currentIdx < session.questionList.length-1) { session.currentIdx++; loadQuestionToStage(); } 
-                else { calculateAndRenderStats(); showPanel('step_stats_panel'); } 
-            } else { session.currentIdx++; session.questionList.push(generatePolynomialQuestion(session.selectedType)); loadQuestionToStage(); } 
+            if(session.endCondition==='COUNT') { if(session.currentIdx < session.questionList.length-1) { session.currentIdx++; loadQuestionToStage(); } else { calculateAndRenderStats(); showPanel('step_stats_panel'); } } 
+            else { session.currentIdx++; session.questionList.push(generatePolynomialQuestion(session.selectedType)); loadQuestionToStage(); } 
         } else if(session.currentMode==='REVIEW') { 
             let comb = [...wrongQuestionBank]; 
-            if(comb.length===0 || session.currentIdx >= session.totalQuestions-1) { resetToMainMenu(false); } 
-            else { session.currentIdx++; session.totalQuestions=comb.length; session.questionList=comb; loadQuestionToStage(); } 
+            if(comb.length===0 || session.currentIdx >= session.totalQuestions-1) { resetToMainMenu(false); } else { session.currentIdx++; session.totalQuestions=comb.length; session.questionList=comb; loadQuestionToStage(); } 
         } else resetToMainMenu(false); 
     }
 
@@ -750,8 +735,7 @@
             else { pct = Math.round((timeLeft / session.timeLimitSetting) * 100); txt = `⏳ 限時衝刺中...`; } 
         } else if (session.currentMode === 'REVIEW') { pct = Math.round(((session.currentIdx + 1) / session.totalQuestions) * 100); txt = `錯題庫復原: ${session.currentIdx + 1}/${session.totalQuestions}`; } 
         else { pct = 100; txt = `沙盒解析引導中`; } 
-        document.getElementById('progressText').innerText = txt; document.getElementById('progressTextStage3').innerText = txt; 
-        document.getElementById('progressBarFill').style.width = `${pct}%`; document.getElementById('progressBarFillStage3').style.width = `${pct}%`; 
+        document.getElementById('progressText').innerText = txt; document.getElementById('progressTextStage3').innerText = txt; document.getElementById('progressBarFill').style.width = `${pct}%`; document.getElementById('progressBarFillStage3').style.width = `${pct}%`; 
     }
 
     function startSessionTimer(seconds) { stopSessionTimer(); timeLeft = seconds; updateTimerDisplay(); document.getElementById('globalTimerBox').style.display = 'inline-block'; document.getElementById('globalTimerBoxStage3').style.display = 'inline-block'; timerInterval = setInterval(() => { timeLeft--; updateTimerDisplay(); if(session.endCondition==='TIME_LIMIT') updateProgressBarUI(); if (timeLeft <= 0) { stopSessionTimer(); alert("⏱️ 時間到！進行數據結算！"); finishTimeLimitSession(); } }, 1000); }
@@ -760,49 +744,17 @@
     function finishTimeLimitSession() { stopSessionTimer(); calculateAndRenderStats(); showPanel('step_stats_panel'); }
 
     function resetToMainMenu(nc) { 
-        if(nc && (document.getElementById('step2').classList.contains('active')||document.getElementById('step3').classList.contains('active'))) { 
-            if(!confirm("確定要中途退出挑戰嗎？")) return; 
-        } 
+        if(nc && (document.getElementById('step2').classList.contains('active')||document.getElementById('step3').classList.contains('active'))) { if(!confirm("確定要中途退出挑戰嗎？")) return; } 
         stopSessionTimer(); document.getElementById('nextBtn').style.display="none"; document.getElementById('teachingZone').style.display="none"; cloudSaveData(); updateReviewMenuUI(); showPanel('step1'); 
     }
 
     function updateReviewMenuUI() { 
-        let reviewBtn = document.getElementById('reviewModeCard'); 
-        if(reviewBtn) reviewBtn.classList.toggle('disabled', wrongQuestionBank.length === 0); 
-        let title = document.getElementById('reviewTitle'); 
-        if(title) title.innerText = `錯題庫 (${wrongQuestionBank.length} 題)`; 
+        let reviewBtn = document.getElementById('reviewModeCard'); if(reviewBtn) reviewBtn.classList.toggle('disabled', wrongQuestionBank.length === 0); 
+        let title = document.getElementById('reviewTitle'); if(title) title.innerText = `錯題庫 (${wrongQuestionBank.length} 題)`; 
     }
 
     function logoutSession() { 
-        if(confirm("確定登出系統嗎？")) { 
-            stopSessionTimer(); 
-            localStorage.removeItem("Active_User_Role"); localStorage.removeItem("Active_User_Class"); localStorage.removeItem("Active_User_Seat"); localStorage.removeItem("Active_User_TeacherID"); 
-            window.location.replace("index.html"); 
-        } 
-    }
-
-    function pushTeacherRecord(mod) {
-        if(currentRole !== 'STUDENT') return;
-        try {
-            let record = {class: userRawClass, seat: userRawSeat, module: mod, score: session.score, timestamp: new Date().toLocaleString("zh-HK", {hour12:false})};
-            let r = JSON.parse(localStorage.getItem('MathSystem_Student_Records') || '[]'); r.unshift(record); if(r.length>200) r.pop(); localStorage.setItem('MathSystem_Student_Records', JSON.stringify(r));
-            let params = new URLSearchParams(); params.append('type', 'RECORD'); params.append('class', record.class); params.append('seat', record.seat); params.append('module', record.module); params.append('score', record.score); params.append('timestamp', record.timestamp);
-            fetch(GAS_API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params.toString() }).catch(e=>{});
-        } catch(e){}
-    }
-
-    function calculateAndRenderStats() {
-        pushTeacherRecord('多項式化簡與展開');
-        const tb = document.getElementById('statsTableBody'); if(!tb) return; tb.innerHTML='';
-        let tr=document.createElement('tr'); tr.className="section-title"; tr.innerHTML=`<th colspan="7">🔮 多項式化簡與展開數據分析</th>`; tb.appendChild(tr);
-        let sObj = cacheStorage.SIMPLIFY.stats;
-        for(let k in sObj) { 
-            let r=sObj[k], t=r.total, fRate=t>0?Math.round((r.firstMatch/t)*100)+'%':'0%', cRate=t>0?Math.round(((r.firstMatch+r.retryMatch)/t)*100)+'%':'0%'; 
-            tb.innerHTML+=`<tr><td style='text-align:left;font-weight:bold;'>${r.name}</td><td>${t}</td><td style='color:var(--success); font-weight:bold;'>${r.firstMatch}</td><td style='color:#b45309;'>${r.retryMatch}</td><td style='color:var(--danger);'>${r.failed}</td><td style='background:#f0fdf4;'>${fRate}</td><td style='background:#eff6ff;'>${cRate}</td></tr>`; 
-        }
-        document.getElementById('statsWrongCount').innerText=wrongQuestionBank.length; 
-        document.getElementById('printStudentInfo').innerHTML = currentRole==='GUEST'?`<span>臨時訪客多項式練習數據</span>` : `<span>學生班別: ${userRawClass}</span> | 學號: ${userRawSeat}`; 
-        document.getElementById('printDate').innerText = `產出時間: `+new Date().toLocaleString();
+        if(confirm("確定登出系統嗎？")) { stopSessionTimer(); localStorage.removeItem("Active_User_Role"); localStorage.removeItem("Active_User_Class"); localStorage.removeItem("Active_User_Seat"); localStorage.removeItem("Active_User_TeacherID"); window.location.replace("index.html"); } 
     }
 </script>
 </body>
