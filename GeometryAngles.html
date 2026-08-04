@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>中一幾何角計算系統 (動態圖形視覺版)</title>
+    <title>中一幾何角計算系統 (雙弧線標準版)</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🪐</text></svg>">
     <style>
         :root { --primary: #3b82f6; --primary-hover: #1d4ed8; --success: #10b981; --danger: #ef4444; --warning: #f59e0b; --info: #06b6d4; --stage-bg: #0f172a; --bg: #f8fafc; --teacher-color: #8b5cf6; --card-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2); --glass-bg: rgba(255, 255, 255, 0.12); --glass-border: 1px solid rgba(255, 255, 255, 0.25); --glass-blur: blur(14px); }
@@ -283,9 +283,15 @@
         let vals = geoData.values;
 
         // 文字繪製幫手 (斜體代表變數/頂點，正體代表數值)
-        function drawMathText(txt, x, y) { ctx.fillStyle = '#000'; ctx.font = 'italic 22px "Times New Roman", Times, serif'; ctx.fillText(txt, x, y); }
+        function drawMathText(txt, x, y, color='#000') { ctx.fillStyle = color; ctx.font = 'italic 22px "Times New Roman", Times, serif'; ctx.fillText(txt, x, y); }
         function drawValueText(txt, x, y, color='#000') { ctx.fillStyle = color; ctx.font = '18px "Times New Roman", Times, serif'; ctx.fillText(txt, x, y); }
         function drawArc(x, y, s, e, r) { ctx.beginPath(); ctx.arc(x, y, r, s, e); ctx.stroke(); }
+        
+        // 新增雙弧線繪製，用於表示角度相等
+        function drawDoubleArc(x, y, s, e, r) { 
+            ctx.beginPath(); ctx.arc(x, y, r, s, e); ctx.stroke(); 
+            ctx.beginPath(); ctx.arc(x, y, r - 6, s, e); ctx.stroke(); 
+        }
         
         // 繪製等長標記 (雙撇/單撇)
         function drawTick(x, y, angle) { 
@@ -299,28 +305,46 @@
             ctx.restore(); 
         }
 
+        // 繪製延長線及其對應的外角弧與標籤
+        function drawExtLineAndArc(pA, pB, pC, label, isTheta=false) {
+            let dx = pB.x - pA.x; let dy = pB.y - pA.y;
+            let len = Math.sqrt(dx*dx + dy*dy);
+            let ex = pB.x + (dx/len)*35;
+            let ey = pB.y + (dy/len)*35;
+            ctx.beginPath(); ctx.moveTo(pB.x, pB.y); ctx.lineTo(ex, ey); ctx.stroke();
+            
+            let a1 = Math.atan2(dy, dx);
+            let a2 = Math.atan2(pC.y - pB.y, pC.x - pB.x);
+            
+            ctx.beginPath();
+            ctx.arc(pB.x, pB.y, 20, a2, a1, true);
+            ctx.stroke();
+
+            let color = isTheta ? '#ef4444' : '#000';
+            let midAng = (a1 + a2)/2; 
+            if(Math.abs(a1-a2) > Math.PI) midAng += Math.PI;
+            
+            drawMathText(label, pB.x + 30*Math.cos(midAng) - 5, pB.y + 30*Math.sin(midAng) + 5, color);
+        }
+
         if(typeNum === 1) {
             if(subType === 'INT') {
                 let A = {x: w/2, y: 40}; let B = {x: 80, y: h-40}; let C = {x: w-80, y: h-40};
                 ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.lineTo(C.x, C.y); ctx.closePath(); ctx.stroke();
                 
-                // 畫角度圓弧
                 drawArc(A.x, A.y, 1.0, 2.14, 30);
                 drawArc(B.x, B.y, -0.9, 0, 30);
                 drawArc(C.x, C.y, Math.PI, Math.PI + 0.9, 30);
                 
                 drawMathText('A', A.x - 10, A.y - 10); drawMathText('B', B.x - 20, B.y + 20); drawMathText('C', C.x + 5, C.y + 20);
                 drawValueText(`${vals[0]}°`, A.x - 15, A.y + 50); drawValueText(`${vals[1]}°`, B.x + 35, B.y - 10); 
-                drawValueText(`θ`, C.x - 45, C.y - 10, '#ef4444');
+                drawMathText(`θ`, C.x - 45, C.y - 10, '#ef4444');
             } else {
-                // 外角定理 (完美還原 edited-image.png 的構圖)
                 let A = {x: 60, y: h-50}; let B = {x: w-130, y: h-50}; let C = {x: w-40, y: h-50}; let D = {x: 150, y: 40};
                 
-                // 紅色底部重點標線
                 ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 3;
                 ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(C.x, C.y); ctx.stroke();
                 
-                // 黑色三角形主體
                 ctx.strokeStyle = '#000000'; ctx.lineWidth = 2;
                 ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(D.x, D.y); ctx.lineTo(B.x, B.y); ctx.stroke();
                 
@@ -330,7 +354,7 @@
                 
                 drawMathText('A', A.x - 25, A.y + 10); drawMathText('B', B.x - 10, B.y + 25); drawMathText('C', C.x + 10, C.y + 10); drawMathText('D', D.x - 10, D.y - 10);
                 drawValueText(`${vals[0]}°`, D.x - 15, D.y + 45); drawValueText(`${vals[1]}°`, A.x + 35, A.y - 5); 
-                drawValueText(`θ`, B.x + 15, B.y - 30, '#ef4444');
+                drawMathText(`θ`, B.x + 15, B.y - 30, '#ef4444');
             }
         }
         else if (typeNum === 2) {
@@ -341,21 +365,21 @@
                 drawTick((A.x+B.x)/2, (A.y+B.y)/2, Math.atan2(B.y-A.y, B.x-A.x));
                 drawTick((A.x+C.x)/2, (A.y+C.y)/2, Math.atan2(C.y-A.y, C.x-A.x));
                 
+                // 頂角單弧線，兩個相等的底角皆採用「雙弧線」標示
                 drawArc(A.x, A.y, 1.1, 2.04, 35);
-                drawArc(B.x, B.y, -1.1, 0, 35);
-                drawArc(C.x, C.y, Math.PI, Math.PI + 1.1, 35);
+                drawDoubleArc(B.x, B.y, -1.1, 0, 35);
+                drawDoubleArc(C.x, C.y, Math.PI, Math.PI + 1.1, 35);
 
                 drawMathText('A', A.x - 10, A.y - 10); drawMathText('B', B.x - 20, B.y + 20); drawMathText('C', C.x + 5, C.y + 20);
                 
                 if(subType === 'ISO_BASE') {
                     drawValueText(`${vals[0]}°`, B.x + 40, B.y - 10);
-                    drawValueText(`θ`, A.x - 5, A.y + 55, '#ef4444');
+                    drawMathText(`θ`, A.x - 5, A.y + 55, '#ef4444');
                 } else {
                     drawValueText(`${vals[0]}°`, A.x - 15, A.y + 55);
-                    drawValueText(`θ`, B.x + 40, B.y - 10, '#ef4444');
+                    drawMathText(`θ`, B.x + 40, B.y - 10, '#ef4444');
                 }
             } else {
-                // 等邊三角形
                 let A = {x: w/2, y: 40}; let B = {x: w/2 - 80, y: h-40}; let C = {x: w/2 + 80, y: h-40};
                 ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.lineTo(C.x, C.y); ctx.closePath(); ctx.stroke();
                 
@@ -363,32 +387,55 @@
                 drawSingleTick((A.x+C.x)/2, (A.y+C.y)/2, Math.atan2(C.y-A.y, C.x-A.x));
                 drawSingleTick((B.x+C.x)/2, (B.y+C.y)/2, 0);
                 
-                drawArc(B.x, B.y, -1.05, 0, 35);
+                // 等邊三角形，三個角完全相等，皆採用「雙弧線」標示
+                drawDoubleArc(A.x, A.y, 1.08, 2.06, 35);
+                drawDoubleArc(B.x, B.y, -1.08, 0, 35);
+                drawDoubleArc(C.x, C.y, Math.PI, Math.PI + 1.08, 35);
+
                 drawMathText('A', A.x - 10, A.y - 10); drawMathText('B', B.x - 20, B.y + 20); drawMathText('C', C.x + 5, C.y + 20);
-                drawValueText(`θ`, B.x + 40, B.y - 10, '#ef4444');
+                drawMathText(`θ`, B.x + 40, B.y - 10, '#ef4444');
             }
         }
-        else if (typeNum === 3 || typeNum === 4) {
-            let sides = typeNum === 3 ? vals[0] : (subType === 'EXT_SUM' ? vals[0] : geoData.ans);
-            let cx = w/2, cy = h/2 + 10, r = 80;
-            let drawSides = Math.min(sides, 10); // 保護機制，超過十邊形以十邊形示意
+        else if (typeNum === 3) {
+            let cx = w/2, cy = h/2;
+            let pts = [ {x: cx - 60, y: cy - 30}, {x: cx - 50, y: cy + 50}, {x: cx + 10, y: cy + 70}, {x: cx + 70, y: cy + 30}, {x: cx + 40, y: cy - 50} ];
+            
+            ctx.beginPath(); ctx.moveTo(pts[4].x, pts[4].y);
+            for(let i=0; i<4; i++) ctx.lineTo(pts[i].x, pts[i].y);
+            ctx.stroke();
+            
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath(); ctx.moveTo(pts[3].x, pts[3].y); ctx.lineTo(pts[4].x, pts[4].y); ctx.stroke();
+            ctx.setLineDash([]);
+            
+            ctx.beginPath(); ctx.arc(pts[0].x, pts[0].y, 20, -1.0, 1.4); ctx.stroke(); drawMathText('a₁', pts[0].x + 8, pts[0].y + 12);
+            ctx.beginPath(); ctx.arc(pts[1].x, pts[1].y, 20, -1.3, 0); ctx.stroke(); drawMathText('a₂', pts[1].x + 8, pts[1].y - 8);
+            ctx.beginPath(); ctx.arc(pts[2].x, pts[2].y, 20, Math.PI, Math.PI+0.9); ctx.stroke(); drawMathText('a₃', pts[2].x - 15, pts[2].y - 8);
+            ctx.beginPath(); ctx.arc(pts[3].x, pts[3].y, 20, Math.PI-0.5, Math.PI+1.5); ctx.stroke(); drawMathText('a₄', pts[3].x - 22, pts[3].y + 8);
+            ctx.beginPath(); ctx.arc(pts[4].x, pts[4].y, 20, 0.4, 2.2); ctx.stroke(); drawMathText('aₙ', pts[4].x - 25, pts[4].y + 20);
+        }
+        else if (typeNum === 4) {
+            let cx = w/2, cy = h/2 + 10;
+            let exPts = [ {x: cx+40, y: cy-60}, {x: cx-10, y: cy-80}, {x: cx-60, y: cy-40}, {x: cx-80, y: cy+10}, {x: cx-40, y: cy+60}, {x: cx+20, y: cy+80}, {x: cx+70, y: cy+30} ];
             
             ctx.beginPath();
-            for(let i=0; i<=drawSides; i++) {
-                let theta = (i * 2 * Math.PI) / drawSides - Math.PI/2;
-                let px = cx + r * Math.cos(theta);
-                let py = cy + r * Math.sin(theta);
-                if(i===0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-            }
+            for(let i=0; i<6; i++) { ctx.moveTo(exPts[i].x, exPts[i].y); ctx.lineTo(exPts[i+1].x, exPts[i+1].y); }
             ctx.stroke();
-
-            ctx.fillStyle = '#000'; ctx.font = 'bold 20px "Times New Roman", Times, serif';
-            ctx.fillText(sides > 10 ? `正 ${sides} 邊形 (示意)` : `正 ${sides} 邊形`, cx - (sides > 10 ? 80 : 50), cy + 5);
             
-            if (typeNum === 4 && subType === 'EXT_SUM') {
-                ctx.fillStyle = '#ef4444'; ctx.fillText(`θ = ? (外角)`, cx - 45, cy + 30);
-            } else if (typeNum === 4 && subType === 'EXT_FIND_N') {
-                ctx.fillStyle = '#ef4444'; ctx.fillText(`外角 = ${vals[0]}°`, cx - 45, cy + 30);
+            ctx.setLineDash([5, 5]); ctx.beginPath(); ctx.moveTo(exPts[6].x, exPts[6].y); ctx.lineTo(exPts[0].x, exPts[0].y); ctx.stroke(); ctx.setLineDash([]);
+
+            let isFindingTheta = (subType === 'EXT_SUM');
+            drawExtLineAndArc(exPts[6], exPts[0], exPts[1], 'x₁');
+            drawExtLineAndArc(exPts[0], exPts[1], exPts[2], 'x₂', isFindingTheta);
+            drawExtLineAndArc(exPts[1], exPts[2], exPts[3], 'x₃');
+            drawExtLineAndArc(exPts[2], exPts[3], exPts[4], 'x₄');
+            drawExtLineAndArc(exPts[3], exPts[4], exPts[5], 'x₅');
+            drawExtLineAndArc(exPts[4], exPts[5], exPts[6], 'x₆');
+            
+            if (isFindingTheta) {
+                drawMathText('θ', exPts[1].x - 10, exPts[1].y - 25, '#ef4444');
+            } else {
+                drawValueText(`${vals[0]}°`, exPts[1].x - 10, exPts[1].y - 25, '#ef4444');
             }
         }
     }
@@ -694,11 +741,11 @@
             }
             
             const step2Title = document.getElementById('step2Title');
-            if(step2Title) step2Title.innerText = (session.currentMode === 'REVIEW') ? "👹 魔王幾何重溫挑戰" : "請根據提示與圖形計算角度";
+            if(step2Title) step2Title.innerText = (session.currentMode === 'REVIEW') ? "👹 魔王幾何重溫挑戰" : "請根據提示計算角度";
 
             setTimeout(() => { 
                 document.getElementById('displayGeo').innerHTML = geoData.expr; 
-                drawGeometry(); // 呼叫 Canvas 繪圖
+                drawGeometry('geoCanvas');
                 showPanel('step2'); 
                 updateProgressBarUI();
             }, 0);
