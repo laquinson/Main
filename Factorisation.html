@@ -47,6 +47,7 @@
 </head>
 <body>
 
+<div id="loadingOverlay" class="loading-overlay" style="display: none;"><div class="spinner"></div><p id="loadingText" style="margin-top:15px;font-weight:bold;">連線中...</p></div>
 <div id="topLeftNav" class="top-left-nav"><button id="dynamicNavBtn" class="top-nav-btn" onclick="handleTopLeftNav()">&lt; 返回學習大廳</button></div>
 <div id="topCenterAccount" class="top-center-account"></div>
 <div id="topRightNav" class="top-right-nav"><button class="top-nav-btn logout-btn-text" onclick="logoutSession()" title="登出">🚪 登出</button></div>
@@ -64,7 +65,6 @@
                 <div><div class="dash-icon">🏆</div><div class="dash-title">即時記錄</div></div>
                 <div class="dash-desc">查看全班與個人分解數據報告</div>
             </div>
-            <!-- 【修改】替換為 因式分解計算機 -->
             <div class="dash-btn bg-teal id-student-only" onclick="switchSetupConfig('SOLVER')">
                 <div><div class="dash-icon"><i>f(x)</i></div><div class="dash-title">因式分解計算機</div></div>
                 <div class="dash-desc">自訂多項式，啟動智能拆解與引導</div>
@@ -92,13 +92,18 @@
         <div class="form-group">
             <label>終點條件：</label>
             <div class="radio-group">
-                <label><input type="radio" name="endCondition" value="COUNT" checked onchange="toggleConditionUI()"> 固定題數模式</label>
+                <label><input type="radio" name="endCondition" value="COUNT" checked onchange="toggleConditionUI()"> 🔢 固定題數模式</label>
+                <label><input type="radio" name="endCondition" value="TARGET_SCORE" onchange="toggleConditionUI()"> 🏆 特定積分達標模式 (指定分數)</label>
                 <label><input type="radio" name="endCondition" value="TIME_LIMIT" onchange="toggleConditionUI()"> ⏳ 限時瘋狂衝分模式</label>
             </div>
         </div>
         <div class="form-group" id="countInputWrapper">
             <label for="totalQuestionsInput">🔢 挑戰題數：</label>
             <input type="number" id="totalQuestionsInput" value="5" min="1" max="25" title="挑戰題數">
+        </div>
+        <div class="form-group" id="targetScoreInputWrapper" style="display: none;">
+            <label for="targetScoreInput">🏆 目標達標分數：</label>
+            <input type="number" id="targetScoreInput" value="5" min="1" title="目標分數" placeholder="分數">
         </div>
         <div class="form-group" id="timeLimitInputWrapper" style="display: none;">
             <label for="timeLimitSelect">⏱️ 限制時間選擇：</label>
@@ -110,7 +115,7 @@
         <button onclick="initChallengeSession()" class="btn-success">🎲 生成關卡，出發！</button>
     </div>
 
-    <!-- 【新增】自訂因式分解計算機輸入面板 -->
+    <!-- 自訂因式分解計算機輸入面板 -->
     <div id="step1_solver" class="step-panel">
         <h2>🛠️ 因式分解有問必答 (自訂化簡)</h2>
         <div class="form-group">
@@ -254,7 +259,7 @@
         }
     };
 
-    let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, timeLimitSetting: 300, score: 0, currentIdx: 0, questionList: [], selectedType: 'MIX', currentTypeNum: 1, wrongAttemptsThisQuestion: 0, wrongAttemptsInTeaching: 0 };
+    let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, targetScore: 5, timeLimitSetting: 300, score: 0, currentIdx: 0, questionList: [], selectedType: 'MIX', currentTypeNum: 1, wrongAttemptsThisQuestion: 0, wrongAttemptsInTeaching: 0 };
     let facData = { type: 1, title: "", expr: "", ans: [], steps: [] };
     let currentTeachStep = 0;
     let timerInterval = null; let timeLeft = 0;
@@ -341,7 +346,6 @@
             return JSON.stringify({ typeNum, title: "十字相乘法", expr, ans, steps });
         }
     }
-    // ========================
 
     document.addEventListener('DOMContentLoaded', function() {
         let savedRole = localStorage.getItem("Active_User_Role"); if (!savedRole) { window.location.replace("index.html"); return; }
@@ -441,6 +445,7 @@
             if(!selectedEl) return;
             let c = selectedEl.value;
             document.getElementById('countInputWrapper').style.display = c === 'COUNT' ? 'block' : 'none';
+            document.getElementById('targetScoreInputWrapper').style.display = c === 'TARGET_SCORE' ? 'block' : 'none';
             document.getElementById('timeLimitInputWrapper').style.display = c === 'TIME_LIMIT' ? 'block' : 'none';
         } catch(e) {}
     }
@@ -506,11 +511,17 @@
             session.score = 0; session.currentIdx = 0; session.questionList = [];
             session.endCondition = document.querySelector('input[name="endCondition"]:checked').value;
             session.selectedType = document.getElementById('typeSelect').value;
+            
             if(session.endCondition === 'COUNT') {
                 stopSessionTimer(); session.totalQuestions = parseInt(document.getElementById('totalQuestionsInput').value) || 5;
                 for(let i=0; i<session.totalQuestions; i++) session.questionList.push(generateFactorisationQuestion(session.selectedType));
+            } else if(session.endCondition === 'TARGET_SCORE') {
+                stopSessionTimer(); session.targetScore = parseInt(document.getElementById('targetScoreInput').value) || 5;
+                session.totalQuestions = 999;
+                session.questionList.push(generateFactorisationQuestion(session.selectedType));
             } else {
                 let sec = parseInt(document.getElementById('timeLimitSelect').value) || 180; session.timeLimitSetting = sec;
+                session.totalQuestions = 999;
                 session.questionList.push(generateFactorisationQuestion(session.selectedType)); startSessionTimer(sec);
             }
             loadQuestionToStage();
@@ -528,9 +539,7 @@
         
         let typeNum = 1; let title = "自訂因式分解"; let ans = []; let steps = [];
         
-        // 簡易的正則判斷引擎
         if (inputStr.includes('^2') && (inputStr.match(/[+-]/g) || []).length === 1 && inputStr.includes('-')) {
-            // 平方差判定 (例: x^2 - 16 或 4x^2 - 25)
             typeNum = 3; title = "平方差解析";
             let parts = inputStr.split('-');
             let aStr = parts[0].includes('x^2') ? parts[0].replace('x^2', '') : '';
@@ -548,7 +557,6 @@
             } else { alert("此模式支援完全平方數解析，請輸入如 x^2-16 的格式！"); return; }
         } 
         else if (inputStr.includes('^2') && (inputStr.match(/[+-]/g) || []).length === 2) {
-            // 十字相乘判定 (例: x^2 - 5x + 6)
             typeNum = 4; title = "十字相乘解析";
             let terms = inputStr.replace(/-/g, '+-').split('+').filter(Boolean);
             let b = 0, c = 0;
@@ -558,7 +566,6 @@
                 else { c = parseInt(t); }
             });
             
-            // 窮舉法找 m, n
             let m=0, n=0, found=false;
             for(let i=-Math.abs(c); i<=Math.abs(c); i++) {
                 if(i===0) continue;
@@ -580,7 +587,6 @@
             } else { alert("找不到整數解，本計算機僅支援能十字相乘的基礎題型！"); return; }
         } 
         else {
-            // 預設當作抽公因式
             typeNum = 1; title = "公因式解析";
             let terms = inputStr.replace(/-/g, '+-').split('+').filter(Boolean);
             let coefs = [], vars = [];
@@ -778,7 +784,15 @@
             if(session.endCondition==='COUNT') { 
                 if(session.currentIdx < session.questionList.length-1) { session.currentIdx++; loadQuestionToStage(); } 
                 else { calculateAndRenderStats(); showPanel('step_stats_panel'); } 
-            } else { session.currentIdx++; session.questionList.push(generateFactorisationQuestion(session.selectedType)); loadQuestionToStage(); } 
+            } else if (session.endCondition === 'TARGET_SCORE') {
+                if (session.score >= session.targetScore) {
+                    alert("🏆 積分達標！完美掌握！"); calculateAndRenderStats(); showPanel('step_stats_panel');
+                } else {
+                    session.currentIdx++; session.questionList.push(generateFactorisationQuestion(session.selectedType)); loadQuestionToStage();
+                }
+            } else { 
+                session.currentIdx++; session.questionList.push(generateFactorisationQuestion(session.selectedType)); loadQuestionToStage(); 
+            } 
         } else if(session.currentMode==='REVIEW') { 
             let comb = [...wrongQuestionBank]; 
             if(comb.length===0 || session.currentIdx >= session.totalQuestions-1) { resetToMainMenu(false); } 
@@ -789,10 +803,18 @@
     function updateProgressBarUI() { 
         let pct = 0; let txt = ""; 
         if (session.currentMode === 'CHALLENGE') { 
-            if (session.endCondition === 'COUNT') { pct = Math.round(((session.currentIdx + 1) / session.totalQuestions) * 100); txt = `關卡進度: ${session.currentIdx + 1} / ${session.totalQuestions}`; } 
-            else { pct = Math.round((timeLeft / session.timeLimitSetting) * 100); txt = `⏳ 限時衝刺中...`; } 
-        } else if (session.currentMode === 'REVIEW') { pct = Math.round(((session.currentIdx + 1) / session.totalQuestions) * 100); txt = `錯題庫復原: ${session.currentIdx + 1}/${session.totalQuestions}`; } 
-        else { pct = 100; txt = `沙盒解析引導中`; } 
+            if (session.endCondition === 'COUNT') { 
+                pct = Math.round(((session.currentIdx + 1) / session.totalQuestions) * 100); txt = `關卡進度: ${session.currentIdx + 1} / ${session.totalQuestions}`; 
+            } else if (session.endCondition === 'TARGET_SCORE') {
+                pct = Math.max(0, Math.min(100, Math.round((session.score / session.targetScore) * 100))); txt = `達標分數進度 (${session.score}/${session.targetScore})`;
+            } else { 
+                pct = Math.round((timeLeft / session.timeLimitSetting) * 100); txt = `⏳ 限時衝刺中...`; 
+            } 
+        } else if (session.currentMode === 'REVIEW') { 
+            pct = Math.round(((session.currentIdx + 1) / session.totalQuestions) * 100); txt = `錯題庫復原: ${session.currentIdx + 1}/${session.totalQuestions}`; 
+        } else { 
+            pct = 100; txt = `沙盒解析引導中`; 
+        } 
         document.getElementById('progressText').innerText = txt; document.getElementById('progressTextStage3').innerText = txt; 
         document.getElementById('progressBarFill').style.width = `${pct}%`; document.getElementById('progressBarFillStage3').style.width = `${pct}%`; 
     }
