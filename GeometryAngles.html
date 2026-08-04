@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>中一幾何角計算系統 (星空完美對齊版)</title>
+    <title>中一幾何角計算系統 (動態圖形視覺版)</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🪐</text></svg>">
     <style>
         :root { --primary: #3b82f6; --primary-hover: #1d4ed8; --success: #10b981; --danger: #ef4444; --warning: #f59e0b; --info: #06b6d4; --stage-bg: #0f172a; --bg: #f8fafc; --teacher-color: #8b5cf6; --card-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2); --glass-bg: rgba(255, 255, 255, 0.12); --glass-border: 1px solid rgba(255, 255, 255, 0.25); --glass-blur: blur(14px); }
@@ -31,7 +31,9 @@
         .progress-banner { background: rgba(0, 0, 0, 0.35); padding: 15px 20px; border-radius: 12px; font-weight: bold; display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; box-sizing: border-box; color: white; border: 1px solid rgba(255,255,255,0.15); }
         .progress-banner-header { display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box; }
         .progress-bar-container { background: rgba(255,255,255,0.2); width: 100%; height: 10px; border-radius: 10px; overflow: hidden; box-sizing: border-box; } .progress-bar-fill { background: var(--success); width: 0%; height: 100%; transition: width 0.4s ease; }
-        .stage-box { background: var(--stage-bg); border-radius: 16px; padding: 25px; margin: 20px 0; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 140px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 1px; line-height: 1.6; border: 1px solid rgba(255,255,255,0.15); }
+        .stage-box { background: var(--stage-bg); border-radius: 16px; padding: 20px; margin: 20px 0; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; font-size: 18px; font-weight: bold; letter-spacing: 1px; line-height: 1.6; border: 1px solid rgba(255,255,255,0.15); }
+        .canvas-container { background: #1e293b; border-radius: 12px; margin-top: 15px; padding: 15px; display: flex; justify-content: center; box-shadow: inset 0 4px 6px rgba(0,0,0,0.3); border: 1px solid #334155; }
+        canvas { max-width: 100%; height: auto; }
         .feedback { padding: 15px; border-radius: 8px; margin: 20px 0; font-weight: bold; border-left: 6px solid #cbd5e1; } .feedback.error { background: #fce8e6; color: var(--danger); border-left-color: var(--danger); } .feedback.warning { background: #fffbeb; color: #b45309; border-left-color: var(--warning); } .feedback.success { background: #e6f4ea; color: var(--success); border-left-color: var(--success); }
         .teaching-row { display: flex; gap: 20px; margin-top: 25px; flex-direction: column; width: 100%; box-sizing: border-box; } @media(min-width: 768px) { .teaching-row { flex-direction: row; } }
         .teaching-column { flex: 1; background: var(--glass-bg); border: var(--glass-border); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); padding: 20px; border-radius: 14px; box-sizing: border-box; color: white; } .teaching-column h3 { text-align: left; margin-top:0; }
@@ -46,7 +48,6 @@
 </head>
 <body>
 
-<div id="loadingOverlay" class="loading-overlay" style="display: none;"><div class="spinner"></div><p id="loadingText" style="margin-top:15px;font-weight:bold;">連線中...</p></div>
 <div id="topLeftNav" class="top-left-nav"><button id="dynamicNavBtn" class="top-nav-btn" onclick="handleTopLeftNav()">&lt; 返回學習大廳</button></div>
 <div id="topCenterAccount" class="top-center-account"></div>
 <div id="topRightNav" class="top-right-nav"><button class="top-nav-btn logout-btn-text" onclick="logoutSession()" title="登出">🚪 登出</button></div>
@@ -66,7 +67,7 @@
             </div>
             <div class="dash-btn bg-teal id-student-only" onclick="switchSetupConfig('POLYGON_TRAINING')">
                 <div><div class="dash-icon">🛑</div><div class="dash-title">多邊形特訓</div></div>
-                <div class="dash-desc">專注訓練多邊形內角和與外角和公式</div>
+                <div class="dash-desc">專注訓練多邊形內外角公式</div>
             </div>
             <div id="reviewModeCard" class="dash-btn bg-blue id-student-only disabled" onclick="switchSetupConfig('REVIEW')">
                 <div><div class="dash-icon">🗂️</div><div class="dash-title" id="reviewTitle">錯題庫 (0 題)</div></div>
@@ -84,7 +85,7 @@
                 <option value="1">1. 三角形內角和與外角定理</option>
                 <option value="2">2. 等腰與等邊三角形性質</option>
                 <option value="3">3. 多邊形內角和 (n-2)×180°</option>
-                <option value="4">4. 多邊形外角和 360°</option>
+                <option value="4">4. 多邊形外角與正多邊形</option>
                 <option value="MIX" selected>5. 🔀 綜合幾何大亂鬥</option>
             </select>
         </div>
@@ -126,14 +127,18 @@
             </div>
             <div class="progress-bar-container"><div id="progressBarFill" class="progress-bar-fill"></div></div>
         </div>
-        <h2 id="step2Title">請根據提示計算角度</h2>
+        <h2 id="step2Title">請根據提示與圖形計算角度</h2>
         <div class="stage-box" id="displayGeoContainer">
-            <span id="displayGeo">題目載入中...</span>
+            <div id="displayGeo">題目載入中...</div>
+            <!-- 動態繪圖區 -->
+            <div class="canvas-container">
+                <canvas id="geoCanvas" width="400" height="250"></canvas>
+            </div>
         </div>
         
         <div id="studentAnswerFormContainer">
             <div class="form-group" id="primaryInputWrapper">
-                <label for="ansInput">請輸入未知的角度大小（不需輸入度數符號）：</label>
+                <label for="ansInput">請輸入未知的角度大小（不需要輸入度數符號）：</label>
                 <input type="number" id="ansInput" placeholder="例如: 65 或 120" autocomplete="off">
             </div>
             <div id="retryInputWrapper" style="display:none; margin-top: 15px; padding-top: 15px; border-top: 2px dashed #cbd5e1;">
@@ -160,7 +165,7 @@
             <div class="progress-bar-container"><div id="progressBarFillStage3" class="progress-bar-fill"></div></div>
         </div>
         <h2 id="step3HeadingTitle">幾何定理與性質推導</h2>
-        <div class="stage-box" id="interactiveStageBox" style="font-size: 22px;">展示台</div>
+        <div class="stage-box" id="interactiveStageBox" style="font-size: 20px;">展示台</div>
         <div id="feedbackArea" class="feedback"></div>
         <button id="solveBtn" class="btn-warning" onclick="startInteractiveSolving()">🔮 啟動定理引導教學黑板</button>
 
@@ -249,107 +254,203 @@
     };
 
     let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, targetScore: 5, timeLimitSetting: 300, score: 0, currentIdx: 0, questionList: [], selectedType: 'MIX', currentTypeNum: 1, wrongAttemptsThisQuestion: 0, wrongAttemptsInTeaching: 0 };
-    let geoData = { type: 1, title: "", expr: "", ans: 0, steps: [] };
+    let geoData = { type: 1, subType: "", title: "", expr: "", ans: 0, values: [], steps: [] };
     let currentTeachStep = 0;
     let timerInterval = null; let timeLeft = 0;
     let wrongQuestionBank = [];
 
+    // === 動態 Canvas 繪圖引擎 (Geometric Canvas Renderer) ===
+    function drawGeometry() {
+        const canvas = document.getElementById('geoCanvas');
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#38bdf8'; // 線條顏色 (淺藍)
+        ctx.fillStyle = '#fde047';   // 文字顏色 (黃色)
+        ctx.font = 'bold 18px sans-serif';
+        
+        const w = canvas.width;
+        const h = canvas.height;
+
+        let typeNum = geoData.typeNum;
+        let subType = geoData.subType;
+        let vals = geoData.values; // [angle1, angle2, ...]
+
+        if (typeNum === 1) { // 內外角
+            if(subType === 'INT') {
+                // 畫一般三角形
+                let A = {x: w/2, y: 40}; let B = {x: 80, y: h-40}; let C = {x: w-80, y: h-40};
+                ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.lineTo(C.x, C.y); ctx.closePath(); ctx.stroke();
+                // 標示角度
+                ctx.fillText(`A (${vals[0]}°)`, A.x - 20, A.y - 10);
+                ctx.fillText(`B (${vals[1]}°)`, B.x - 30, B.y + 20);
+                ctx.fillStyle = '#ef4444'; // 紅色未知角
+                ctx.fillText(`C (?)`, C.x + 10, C.y + 20);
+            } else {
+                // 外角 (包含延長線)
+                let A = {x: w/3, y: 50}; let B = {x: 50, y: h-50}; let C = {x: w-120, y: h-50}; let D = {x: w-20, y: h-50};
+                ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.lineTo(C.x, C.y); ctx.closePath(); ctx.stroke();
+                // 畫延長線 (虛線)
+                ctx.setLineDash([5, 5]); ctx.beginPath(); ctx.moveTo(C.x, C.y); ctx.lineTo(D.x, D.y); ctx.stroke(); ctx.setLineDash([]);
+                
+                ctx.fillText(`A (${vals[0]}°)`, A.x - 10, A.y - 10);
+                ctx.fillText(`B (${vals[1]}°)`, B.x - 30, B.y + 20);
+                ctx.fillStyle = '#ef4444'; 
+                ctx.fillText(`?`, C.x + 30, C.y - 10);
+            }
+        } 
+        else if (typeNum === 2) { // 等腰/等邊
+            if(subType === 'ISO_BASE') {
+                let A = {x: w/2, y: 40}; let B = {x: 100, y: h-40}; let C = {x: w-100, y: h-40};
+                ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.lineTo(C.x, C.y); ctx.closePath(); ctx.stroke();
+                // 畫等腰標記 //
+                ctx.beginPath(); ctx.moveTo(w/2 - 40, h/2 - 10); ctx.lineTo(w/2 - 50, h/2 + 10); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(w/2 + 40, h/2 - 10); ctx.lineTo(w/2 + 50, h/2 + 10); ctx.stroke();
+                
+                ctx.fillText(`${vals[0]}°`, B.x - 10, B.y + 25);
+                ctx.fillStyle = '#ef4444'; ctx.fillText(`? (頂角)`, A.x - 30, A.y - 10);
+            } 
+            else if(subType === 'ISO_TOP') {
+                let A = {x: w/2, y: 40}; let B = {x: 100, y: h-40}; let C = {x: w-100, y: h-40};
+                ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.lineTo(C.x, C.y); ctx.closePath(); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(w/2 - 40, h/2 - 10); ctx.lineTo(w/2 - 50, h/2 + 10); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(w/2 + 40, h/2 - 10); ctx.lineTo(w/2 + 50, h/2 + 10); ctx.stroke();
+                
+                ctx.fillText(`${vals[0]}°`, A.x - 15, A.y - 10);
+                ctx.fillStyle = '#ef4444'; ctx.fillText(`?`, B.x - 10, B.y + 25);
+            }
+            else { // EQUILATERAL
+                let A = {x: w/2, y: 40}; let B = {x: w/2 - 90, y: h-40}; let C = {x: w/2 + 90, y: h-40};
+                ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.lineTo(C.x, C.y); ctx.closePath(); ctx.stroke();
+                // 三邊等長標記
+                ctx.beginPath(); ctx.moveTo(w/2 - 50, h/2 - 5); ctx.lineTo(w/2 - 40, h/2 + 5); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(w/2 + 50, h/2 - 5); ctx.lineTo(w/2 + 40, h/2 + 5); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(w/2 - 5, h-45); ctx.lineTo(w/2 + 5, h-35); ctx.stroke();
+                
+                ctx.fillStyle = '#ef4444'; ctx.fillText(`?`, B.x, B.y + 25);
+            }
+        }
+        else if (typeNum === 3 || typeNum === 4) { // 多邊形
+            let sides = typeNum === 3 ? vals[0] : (subType === 'EXT_SUM' ? vals[0] : geoData.ans);
+            let cx = w/2, cy = h/2, r = 80;
+            
+            // 防呆限制最多畫 10 邊形以免太密集
+            let drawSides = Math.min(sides, 10); 
+            ctx.beginPath();
+            for(let i=0; i<drawSides; i++) {
+                let theta = (i * 2 * Math.PI) / drawSides - Math.PI/2;
+                let px = cx + r * Math.cos(theta);
+                let py = cy + r * Math.sin(theta);
+                if(i===0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+            }
+            ctx.closePath(); ctx.stroke();
+            
+            ctx.fillStyle = '#fff'; ctx.font = 'bold 24px sans-serif';
+            ctx.fillText(sides > 10 ? `正 ${sides} 邊形 (示意)` : `正 ${sides} 邊形`, cx - (sides > 10 ? 90 : 50), cy + 10);
+            
+            if (typeNum === 4 && subType === 'EXT_SUM') {
+                ctx.fillStyle = '#ef4444'; ctx.font = 'bold 18px sans-serif';
+                ctx.fillText(`求外角 = ?`, cx - 40, cy + 50);
+            }
+        }
+    }
+
     // === GeoEngine 1.0 幾何題庫生成引擎 ===
     function generateGeometryQuestion(mode) {
         let typeNum = (mode === 'MIX') ? Math.floor(Math.random() * 4) + 1 : parseInt(mode);
-        let expr = "", ans = 0, steps = [];
+        let expr = "", ans = 0, steps = [], subType = "", values = [];
 
         if (typeNum === 1) {
             let isExterior = Math.random() > 0.5;
             if(!isExterior) {
-                let a = Math.floor(Math.random()*60)+30; 
-                let b = Math.floor(Math.random()*60)+30; 
-                ans = 180 - a - b;
+                subType = 'INT';
+                let a = Math.floor(Math.random()*60)+30; let b = Math.floor(Math.random()*60)+30; ans = 180 - a - b; values = [a,b];
                 expr = `在 △ABC 中，已知 ∠A = ${a}°，∠B = ${b}°。<br>請問 ∠C 的度數是多少？`;
                 steps = [
-                    { prompt: "三角形內角和等於多少度？", expected: "180", tip: "回想三角形內角和定理 (∠sum of △)" },
+                    { prompt: "三角形內角和等於多少度？", expected: "180", tip: "回想三角形內角和定理" },
                     { prompt: "已知兩角和為多少度？", expected: String(a+b), tip: `計算 ${a} + ${b}` },
                     { prompt: "剩下的 ∠C 為多少度？", expected: String(ans), tip: `用 180 減去剛才的總和` }
                 ];
             } else {
-                let a = Math.floor(Math.random()*50)+30; 
-                let b = Math.floor(Math.random()*50)+30; 
-                ans = a + b;
-                expr = `已知 △ABC 中，∠A = ${a}°，∠B = ${b}°。<br>將 BC 延長至 D 點，請問外角 ∠ACD 的度數是多少？`;
+                subType = 'EXT';
+                let a = Math.floor(Math.random()*50)+30; let b = Math.floor(Math.random()*50)+30; ans = a + b; values = [a,b];
+                expr = `已知 △ABC 中，∠A = ${a}°，∠B = ${b}°。<br>將 BC 延長，請問外角 ∠ACD 的度數是多少？`;
                 steps = [
-                    { prompt: "外角定理說明外角等於兩個(內對角)的什麼？", expected: String(a+b), tip: `計算兩個不相鄰內角的和 (${a} + ${b})` },
+                    { prompt: "外角定理說明外角等於兩個內對角的總和。兩角和為？", expected: String(a+b), tip: `計算 ${a} + ${b}` },
                     { prompt: "因此 ∠ACD 等於多少度？", expected: String(ans), tip: "外角 = 內對角之和 (ext. ∠ of △)" }
                 ];
             }
-            return JSON.stringify({ typeNum, title: "三角形內外角定理", expr, ans, steps });
+            return JSON.stringify({ typeNum, subType, values, title: "三角形內外角", expr, ans, steps });
         } 
         else if (typeNum === 2) {
             let isIsosceles = Math.random() > 0.3;
             if(isIsosceles) {
                 let givenBase = Math.random() > 0.5;
                 if(givenBase) {
-                    let base = Math.floor(Math.random()*30)+40; // 40~69
-                    ans = 180 - base*2;
-                    expr = `已知一個等腰三角形，其底角為 ${base}°。<br>請問其頂角的度數是多少？`;
+                    subType = 'ISO_BASE';
+                    let base = Math.floor(Math.random()*30)+40; ans = 180 - base*2; values = [base];
+                    expr = `等腰三角形的兩個底角相等。<br>已知底角為 ${base}°，請問其頂角的度數是多少？`;
                     steps = [
-                        { prompt: "等腰三角形的兩個底角關係為何？", expected: String(base), tip: "等腰三角形兩底角相等，所以另一個底角也是多少？ (base ∠s, isos. △)" },
+                        { prompt: "另一個底角也是多少度？", expected: String(base), tip: "等腰三角形兩底角相等" },
                         { prompt: "兩個底角的總和為：", expected: String(base*2), tip: `計算 ${base} + ${base}` },
                         { prompt: "頂角等於多少度？", expected: String(ans), tip: "用 180 減去兩個底角的和" }
                     ];
                 } else {
-                    let top = Math.floor(Math.random()*80)+30; // 30~109
-                    ans = (180 - top) / 2;
-                    if(ans % 1 !== 0) top += 1; ans = (180 - top) / 2; // ensure integer
-                    expr = `已知一個等腰三角形，其頂角為 ${top}°。<br>請問其底角的度數是多少？`;
+                    subType = 'ISO_TOP';
+                    let top = Math.floor(Math.random()*80)+30; ans = (180 - top) / 2;
+                    if(ans % 1 !== 0) { top += 1; ans = (180 - top) / 2; } values = [top];
+                    expr = `等腰三角形的兩個底角相等。<br>已知頂角為 ${top}°，請問其底角的度數是多少？`;
                     steps = [
                         { prompt: "兩個底角的總和等於多少度？", expected: String(180-top), tip: `用 180 減去頂角 ${top}` },
-                        { prompt: "一個底角等於多少度？", expected: String(ans), tip: `因為底角相等，將剛才的總和除以 2` }
+                        { prompt: "一個底角等於多少度？", expected: String(ans), tip: `將總和除以 2` }
                     ];
                 }
             } else {
-                ans = 60;
-                expr = `在一個等邊三角形 (Equilateral Triangle) 中，<br>每個內角的度數是多少？`;
+                subType = 'EQUILATERAL';
+                ans = 60; values = [];
+                expr = `在一個等邊三角形 (三邊等長) 中，<br>每個內角的度數是多少？`;
                 steps = [
-                    { prompt: "等邊三角形有幾個相等的角？", expected: "3", tip: "顧名思義，三邊相等，三內角也相等" },
-                    { prompt: "三角形內角和是多少度？", expected: "180", tip: "所有三角形內角和都是固定的" },
-                    { prompt: "所以每個內角等於多少度？", expected: "60", tip: "將 180 除以 3 (prop. of equil. △)" }
+                    { prompt: "等邊三角形有幾個相等的角？", expected: "3", tip: "三邊相等，三內角也相等" },
+                    { prompt: "三角形內角和是多少度？", expected: "180", tip: "所有三角形內角和固定" },
+                    { prompt: "每個內角等於多少度？", expected: "60", tip: "將 180 除以 3" }
                 ];
             }
-            return JSON.stringify({ typeNum, title: "等腰與等邊三角形", expr, ans, steps });
+            return JSON.stringify({ typeNum, subType, values, title: "等腰與等邊三角形", expr, ans, steps });
         }
         else if (typeNum === 3) {
             let n = Math.floor(Math.random()*8)+5; // 5~12 邊形
-            ans = (n - 2) * 180;
-            expr = `請問一個 <b>${n} 邊形 (Polygon)</b> 的內角和總共是多少度？`;
+            subType = 'POLY_INT'; values = [n]; ans = (n - 2) * 180;
+            expr = `請問一個 <b>${n} 邊形</b> 的內角和總共是多少度？`;
             steps = [
                 { prompt: "計算內角和的公式是 (n - ?) × 180°，請問 ? 是多少？", expected: "2", tip: "公式為 (n-2) × 180°" },
-                { prompt: "將邊數代入，括號內 (n - 2) 的值是：", expected: String(n-2), tip: `計算 ${n} - 2` },
-                { prompt: "最後總內角和等於多少度？", expected: String(ans), tip: `將 ${n-2} 乘以 180 (∠ sum of polygon)` }
+                { prompt: `將邊數 ${n} 代入，(n - 2) 的值是：`, expected: String(n-2), tip: `計算 ${n} - 2` },
+                { prompt: "最後總內角和等於多少度？", expected: String(ans), tip: `將 ${n-2} 乘以 180` }
             ];
-            return JSON.stringify({ typeNum, title: "多邊形內角和", expr, ans, steps });
+            return JSON.stringify({ typeNum, subType, values, title: "多邊形內角和", expr, ans, steps });
         }
         else {
             let isExtSum = Math.random() > 0.5;
             if(isExtSum) {
-                let edges = [5,6,8,9,10,12,15,18];
-                let n = edges[Math.floor(Math.random()*edges.length)];
-                ans = 360 / n;
-                expr = `已知這是一個<b>正 ${n} 邊形 (Regular Polygon)</b>。<br>請問它的「每一個外角」是多少度？`;
+                subType = 'EXT_SUM';
+                let edges = [5,6,8,9,10,12,15,18]; let n = edges[Math.floor(Math.random()*edges.length)];
+                ans = 360 / n; values = [n];
+                expr = `已知這是一個<b>正 ${n} 邊形</b>。<br>請問它的「每一個外角」是多少度？`;
                 steps = [
-                    { prompt: "所有多邊形的外角和都是固定的，等於多少度？", expected: "360", tip: "多邊形外角和永遠是 360° (sum of ext. ∠s of polygon)" },
+                    { prompt: "所有多邊形的外角和都是固定的，等於多少度？", expected: "360", tip: "外角和永遠是 360°" },
                     { prompt: "正多邊形的外角都相等，所以每個外角等於：", expected: String(ans), tip: `將 360 除以邊數 ${n}` }
                 ];
             } else {
-                let angles = [40, 45, 60, 72, 90, 120];
-                let extAngle = angles[Math.floor(Math.random()*angles.length)];
-                ans = 360 / extAngle;
-                expr = `已知一個正多邊形，它的「每一個外角」是 ${extAngle}°。<br>請問這是正幾邊形？`;
+                subType = 'EXT_FIND_N';
+                let angles = [40, 45, 60, 72, 90, 120]; let extAngle = angles[Math.floor(Math.random()*angles.length)];
+                ans = 360 / extAngle; values = [extAngle];
+                expr = `已知一個正多邊形，它的「每一個外角」是 ${extAngle}°。<br>請問這是正幾邊形（求 n）？`;
                 steps = [
-                    { prompt: "所有多邊形的外角和等於多少度？", expected: "360", tip: "無論幾邊形，外角和永遠是 360°" },
-                    { prompt: "邊數 (n) 等於多少？", expected: String(ans), tip: `將外角和 360 除以每個外角的度數 ${extAngle}` }
+                    { prompt: "所有多邊形的外角和等於多少度？", expected: "360", tip: "外角和永遠是 360°" },
+                    { prompt: "邊數 (n) 等於多少？", expected: String(ans), tip: `將外角和 360 除以每個外角 ${extAngle}` }
                 ];
             }
-            return JSON.stringify({ typeNum, title: "多邊形外角與正多邊形", expr, ans, steps });
+            return JSON.stringify({ typeNum, subType, values, title: "多邊形外角和", expr, ans, steps });
         }
     }
     // ========================
@@ -556,10 +657,11 @@
             }
             
             const step2Title = document.getElementById('step2Title');
-            if(step2Title) step2Title.innerText = (session.currentMode === 'REVIEW') ? "👹 魔王幾何重溫挑戰" : "請根據題意計算角度";
+            if(step2Title) step2Title.innerText = (session.currentMode === 'REVIEW') ? "👹 魔王幾何重溫挑戰" : "請根據提示與圖形計算角度";
 
             setTimeout(() => { 
                 document.getElementById('displayGeo').innerHTML = geoData.expr; 
+                drawGeometry(); // 呼叫 Canvas 繪圖引擎
                 showPanel('step2'); 
                 updateProgressBarUI();
             }, 0);
@@ -624,7 +726,6 @@
         f.innerHTML = session.currentMode==='CHALLENGE' ? "❌ 補答依然有誤。<span style='color:red;'>[挑戰失敗] 積分 -1 分！</span>請點擊下方開啟定理引導教學。" : "❌ 角度計算失敗。請點擊下方開啟引導。";
     }
 
-    // 動態黑板引導邏輯
     function startInteractiveSolving() { 
         document.getElementById('solveBtn').style.display="none"; document.getElementById('teachingZone').style.display="flex"; 
         currentTeachStep = 0; renderMathSteps(); loadTeachingStepUI();
@@ -643,7 +744,6 @@
         let uOp = document.getElementById('stepInput').value.trim();
         let stepObj = geoData.steps[currentTeachStep];
         
-        // 檢查防卡死秒殺
         if(uOp === String(geoData.ans) && currentTeachStep < geoData.steps.length - 1) {
             alert("🚀 聰明！直接算出最終答案！"); executeDirectSuccess(); return;
         }
