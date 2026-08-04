@@ -4,23 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>數學智能練習系統 - 中央大廳</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🪐</text></svg>">
     <style>
         body { background: url('https://i.imgur.com/f118Qxn.jpeg') no-repeat center center fixed; background-size: cover; color: #fff; font-family: system-ui, sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .top-center-account { position: absolute; top: 25px; font-size: 20px; font-weight: 900; text-shadow: 1px 1px 4px rgba(0,0,0,0.6); z-index: 999 !important; font-family: 'Comic Sans MS', sans-serif;}
         .top-right-nav { position: absolute; top: 25px; right: 20px; z-index: 999 !important; }
-        .top-nav-btn { background: #fff; padding: 8px 16px; border-radius: 12px; border: 2px solid #cbd5e1; cursor: pointer; font-weight: bold; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .top-nav-btn:hover { transform: scale(1.03); } .logout-btn-text { color: #ef4444; border-color: #fecdd3; } .logout-btn-text:hover { background: #fff1f2; }
-        .container { margin-top: 80px; width: 100%; max-width: 950px; padding: 40px; border-radius: 24px; background: rgba(255, 255, 255, 0.12); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.25); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15); box-sizing: border-box; }
-        h1 { text-align: center; text-shadow: 1px 1px 4px rgba(0,0,0,0.6); font-size: 32px; font-weight: 800; margin-top: 0; }
-        .welcome-msg { text-align: center; margin-bottom: 40px; font-size: 18px; font-weight: bold; color: #e2e8f0; }
+        .top-nav-btn { background: rgba(255, 255, 255, 0.95); padding: 8px 16px; border-radius: 12px; border: 2px solid #cbd5e1; cursor: pointer; font-weight: bold; color: #475569; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .top-nav-btn:hover { transform: scale(1.03); border-color: #3b82f6; color: #3b82f6; } .logout-btn-text { color: #ef4444; border-color: #fecdd3; } .logout-btn-text:hover { background: #fff1f2; border-color: #ef4444; color: #ef4444; }
+        
+        .container { margin-top: 80px; width: 100%; max-width: 950px; padding: 40px; border-radius: 24px; background: rgba(255, 255, 255, 0.12); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.25); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); box-sizing: border-box; }
+        h1 { text-align: center; text-shadow: 1px 1px 4px rgba(0,0,0,0.8); font-size: 32px; font-weight: 800; margin-top: 0; }
+        .welcome-msg { text-align: center; margin-bottom: 40px; font-size: 18px; font-weight: bold; color: #e2e8f0; text-shadow: 1px 1px 3px rgba(0,0,0,0.6); }
         
         .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .game-card { background: rgba(0,0,0,0.4); padding: 30px 20px; border-radius: 16px; text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; border: 1px solid rgba(255,255,255,0.15); display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .game-card:hover { transform: translateY(-5px); background: rgba(0,0,0,0.6); box-shadow: 0 10px 20px rgba(0,0,0,0.3); border-color: #3b82f6; }
-        .game-icon { font-size: 48px; margin-bottom: 15px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); } .game-title { font-size: 22px; margin: 0 0 10px 0; font-weight: bold; text-align: center; } .game-desc { font-size: 14px; opacity: 0.9; margin: 0; line-height: 1.5; text-align: center; color: #cbd5e1; }
+        .game-card { background: rgba(0,0,0,0.4); padding: 30px 20px; border-radius: 16px; text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; border: 1px solid rgba(255,255,255,0.15); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 200px; }
+        .game-card:hover { transform: translateY(-5px); background: rgba(0,0,0,0.6); box-shadow: 0 15px 25px rgba(0,0,0,0.4); border-color: #3b82f6; }
+        .game-icon { font-size: 52px; margin-bottom: 15px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); } .game-title { font-size: 22px; margin: 0 0 10px 0; font-weight: bold; text-align: center; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); } .game-desc { font-size: 14px; opacity: 0.9; margin: 0; line-height: 1.5; text-align: center; color: #cbd5e1; }
         
         .teacher-filters { background: rgba(255,255,255,0.15); padding: 15px; border-radius: 16px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.3); }
-        .teacher-filters select, .teacher-filters button { padding: 10px 15px; border-radius: 8px; font-size: 15px; font-weight: bold; border: 1px solid rgba(255,255,255,0.4); outline: none; background: rgba(255,255,255,0.9); color: #0f172a; }
+        .teacher-filters select, .teacher-filters button { padding: 10px 15px; border-radius: 8px; font-size: 15px; font-weight: bold; border: 1px solid rgba(255,255,255,0.4); outline: none; background: rgba(255, 255, 255, 0.9); color: #0f172a; }
         .teacher-filters button { background: #8b5cf6; color: #fff; border: none; cursor: pointer; transition: transform 0.2s; } .teacher-filters button:hover { transform: translateY(-2px); background: #7c3aed; }
         .danger-btn { background:#ef4444 !important; color:white; border:none; padding:10px 15px; border-radius:8px; font-weight:bold; cursor:pointer; }
         
@@ -44,9 +46,30 @@
     <div id="welcomeText" class="welcome-msg">歡迎回來</div>
     
     <div id="studentHall" class="menu-grid">
-        <div class="game-card" onclick="goToModule('Substitution.html')"><div class="game-icon">📐</div><h2 class="game-title">多變數代數式求值</h2><p class="game-desc">探索跨學科公式代入，啟動隱形括號破譯思維逐步解題！</p></div>
-        <div class="game-card" onclick="goToModule('Equations.html')"><div class="game-icon">⚖️</div><h2 class="game-title">天秤等量公理求值</h2><p class="game-desc">建立一元一次方程守恆思維，在天秤兩盤施加同等操作逐步孤立求未知數！</p></div>
-        <div class="game-card" onclick="goToModule('Polynomial.html')" style="grid-column: span 1;"><div class="game-icon">🔮</div><h2 class="game-title">多項式化簡與展開</h2><p class="game-desc">啟動田字格魔法陣，輕鬆攻破去括號與同類項合併！</p></div>
+        <!-- 模組 1 -->
+        <div class="game-card" onclick="goToModule('Substitution.html')">
+            <div class="game-icon">📐</div>
+            <h2 class="game-title">多變數代數式求值</h2>
+            <p class="game-desc">探索跨學科公式代入，啟動隱形括號破譯思維逐步解題！</p>
+        </div>
+        <!-- 模組 2 -->
+        <div class="game-card" onclick="goToModule('Equations.html')">
+            <div class="game-icon">⚖️</div>
+            <h2 class="game-title">天秤等量公理求值</h2>
+            <p class="game-desc">建立一元一次方程守恆思維，在天秤兩盤施加同等操作逐步孤立未知數！</p>
+        </div>
+        <!-- 模組 3 -->
+        <div class="game-card" onclick="goToModule('Polynomial.html')">
+            <div class="game-icon">🔮</div>
+            <h2 class="game-title">多項式化簡與展開</h2>
+            <p class="game-desc">啟動田字格魔法陣，輕鬆攻破代數式去括號與同類項合併！</p>
+        </div>
+        <!-- 模組 4 (新增：因式分解) -->
+        <div class="game-card" onclick="goToModule('factorisation.html')">
+            <div class="game-icon">🧩</div>
+            <h2 class="game-title">多項式因式分解</h2>
+            <p class="game-desc">掌握抽公因式、併項法、平方差恆等式與十字相乘，破解代數密碼！</p>
+        </div>
     </div>
 
     <div id="teacherDashboard" style="display: none; width: 100%;">
@@ -107,12 +130,10 @@
         let titleEl = document.getElementById('reportTitle');
         if(titleEl) titleEl.innerText = "⏳ 正在從 Google Drive 雲端同步最新數據...";
         try {
-            // 加入 timestamp 強制瀏覽器不要抓快取
             let res = await fetch(`${GAS_API_URL}?type=GET_RECORDS&t=${new Date().getTime()}`);
             if (res.ok) {
                 let data = await res.json();
                 if (data && data.records) {
-                    // 將雲端與本地的數據進行智慧合併去重，防止雲端覆蓋掉尚未上傳的本地進度
                     let localRecords = JSON.parse(localStorage.getItem('MathSystem_Student_Records') || '[]');
                     let merged = [...data.records, ...localRecords];
                     let uniqueRecords = Array.from(new Set(merged.map(JSON.stringify))).map(JSON.parse);
@@ -123,7 +144,7 @@
             console.log("GAS 雲端同步被阻擋或逾時，已切換回本地緩存資料。", e);
         }
         if(titleEl) titleEl.innerText = "📊 數據已就緒";
-        queryData(); // 同步完畢後強制自動渲染表格
+        queryData(); 
     }
 
     function buildTeacherFilters() {
@@ -186,7 +207,7 @@
         let rowsHtml = "";
         aggregatedList.forEach(student => {
             let s = student.data; let avg = (s.totalScore / s.count).toFixed(1);
-            let modsArray = Array.from(s.modules); let modTags = modsArray.map(m => `<span style="background:rgba(56, 189, 248, 0.2); color:#38bdf8; padding:2px 6px; border-radius:4px; margin-right:4px; font-size:12px;">${m}</span>`).join('');
+            let modsArray = Array.from(s.modules); let modTags = modsArray.map(m => `<span style="background:rgba(56, 189, 248, 0.2); color:#38bdf8; padding:2px 6px; border-radius:4px; margin-right:4px; font-size:12px; white-space:nowrap; display:inline-block; margin-bottom:4px;">${m}</span>`).join('');
             rowsHtml += `<tr><td style="font-weight:bold; font-size:16px;">${student.seat} 號</td><td>${s.count} 次</td><td>${modTags}</td><td style="color:#4ade80; font-weight:bold;">${s.totalScore} 分</td><td style="color:#fcd34d; font-weight:bold;">${avg}</td></tr>`;
         });
         tBody.innerHTML = rowsHtml;
@@ -200,7 +221,10 @@
     
     function logoutSession() { 
         if(confirm("確定登出系統嗎？")) { 
-            localStorage.removeItem("Active_User_Role"); localStorage.removeItem("Active_User_Class"); localStorage.removeItem("Active_User_Seat"); localStorage.removeItem("Active_User_TeacherID");
+            localStorage.removeItem("Active_User_Role");
+            localStorage.removeItem("Active_User_Class");
+            localStorage.removeItem("Active_User_Seat");
+            localStorage.removeItem("Active_User_TeacherID");
             window.location.replace("index.html"); 
         } 
     }
