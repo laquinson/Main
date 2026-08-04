@@ -129,10 +129,9 @@
             <div class="progress-bar-container"><div id="progressBarFill" class="progress-bar-fill"></div></div>
         </div>
         <h2 id="step2Title">請根據提示與圖形計算角度</h2>
-        
         <div class="stage-box" id="displayGeoContainer">
-            <div id="displayGeo" style="margin-bottom: 5px;">題目載入中...</div>
-            <!-- 動態 Canvas 繪圖區 (教科書標準設定) -->
+            <div id="displayGeo">題目載入中...</div>
+            <!-- 動態 Canvas 繪圖區 -->
             <div class="canvas-container">
                 <canvas id="geoCanvas" width="400" height="250"></canvas>
             </div>
@@ -140,7 +139,7 @@
         
         <div id="studentAnswerFormContainer">
             <div class="form-group" id="primaryInputWrapper">
-                <label for="ansInput">請輸入未知的角度大小（不需要輸入度數符號）：</label>
+                <label for="ansInput">請輸入未知的角度大小（不需輸入度數符號）：</label>
                 <input type="number" id="ansInput" placeholder="例如: 65 或 120" autocomplete="off">
             </div>
             <div id="retryInputWrapper" style="display:none; margin-top: 15px; padding-top: 15px; border-top: 2px dashed #cbd5e1;">
@@ -261,7 +260,7 @@
     let timerInterval = null; let timeLeft = 0;
     let wrongQuestionBank = [];
 
-    // === 動態教科書標準繪圖引擎 (Geometric Canvas Renderer) ===
+    // === 動態 Canvas 繪圖引擎 (Geometric Canvas Renderer) ===
     function drawGeometry() {
         const canvas = document.getElementById('geoCanvas');
         const ctx = canvas.getContext('2d');
@@ -281,12 +280,12 @@
         let subType = geoData.subType;
         let vals = geoData.values;
 
-        // 文字繪製幫手 (斜體代表變數/頂點，正體代表數值)
+        // 文字繪製幫手
         function drawMathText(txt, x, y) { ctx.fillStyle = '#000'; ctx.font = 'italic 22px "Times New Roman", Times, serif'; ctx.fillText(txt, x, y); }
         function drawValueText(txt, x, y, color='#000') { ctx.fillStyle = color; ctx.font = '18px "Times New Roman", Times, serif'; ctx.fillText(txt, x, y); }
         function drawArc(x, y, s, e, r) { ctx.beginPath(); ctx.arc(x, y, r, s, e); ctx.stroke(); }
         
-        // 繪製等長標記 (雙撇/單撇)
+        // 繪製等長標記
         function drawTick(x, y, angle) { 
             ctx.save(); ctx.translate(x, y); ctx.rotate(angle); 
             ctx.beginPath(); ctx.moveTo(-5, -8); ctx.lineTo(-5, 8); ctx.moveTo(5, -8); ctx.lineTo(5, 8); ctx.stroke(); 
@@ -303,7 +302,6 @@
                 let A = {x: w/2, y: 40}; let B = {x: 80, y: h-40}; let C = {x: w-80, y: h-40};
                 ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.lineTo(C.x, C.y); ctx.closePath(); ctx.stroke();
                 
-                // 畫角度圓弧
                 drawArc(A.x, A.y, 1.0, 2.14, 30);
                 drawArc(B.x, B.y, -0.9, 0, 30);
                 drawArc(C.x, C.y, Math.PI, Math.PI + 0.9, 30);
@@ -312,7 +310,7 @@
                 drawValueText(`${vals[0]}°`, A.x - 15, A.y + 50); drawValueText(`${vals[1]}°`, B.x + 35, B.y - 10); 
                 drawValueText(`θ`, C.x - 45, C.y - 10, '#ef4444');
             } else {
-                // 外角定理 (完美還原 edited-image.png 的構圖)
+                // 外角定理 (教科書排版)
                 let A = {x: 60, y: h-50}; let B = {x: w-130, y: h-50}; let C = {x: w-40, y: h-50}; let D = {x: 150, y: 40};
                 
                 // 紅色底部重點標線
@@ -354,7 +352,6 @@
                     drawValueText(`θ`, B.x + 40, B.y - 10, '#ef4444');
                 }
             } else {
-                // 等邊三角形
                 let A = {x: w/2, y: 40}; let B = {x: w/2 - 80, y: h-40}; let C = {x: w/2 + 80, y: h-40};
                 ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.lineTo(C.x, C.y); ctx.closePath(); ctx.stroke();
                 
@@ -370,7 +367,7 @@
         else if (typeNum === 3 || typeNum === 4) {
             let sides = typeNum === 3 ? vals[0] : (subType === 'EXT_SUM' ? vals[0] : geoData.ans);
             let cx = w/2, cy = h/2 + 10, r = 80;
-            let drawSides = Math.min(sides, 10); // 保護機制，超過十邊形以十邊形示意
+            let drawSides = Math.min(sides, 10); 
             
             ctx.beginPath();
             for(let i=0; i<=drawSides; i++) {
@@ -402,16 +399,16 @@
             if(!isExterior) {
                 subType = 'INT';
                 let a = Math.floor(Math.random()*60)+30; let b = Math.floor(Math.random()*60)+30; ans = 180 - a - b; values = [a,b];
-                expr = `在 △<i>ABC</i> 中，已知 ∠<i>A</i> = ${a}°，∠<i>B</i> = ${b}°。<br>請問 ∠<i>C</i> (θ) 的度數是多少？`;
+                expr = `在 △<i>ABC</i> 中，已知 ∠<i>A</i> = ${a}°，∠<i>B</i> = ${b}°。<br>請問 θ 是多少度？`;
                 steps = [
                     { prompt: "三角形內角和等於多少度？", expected: "180", tip: "回想三角形內角和定理" },
                     { prompt: "已知兩角和為多少度？", expected: String(a+b), tip: `計算 ${a} + ${b}` },
-                    { prompt: "剩下的 ∠C (θ) 為多少度？", expected: String(ans), tip: `用 180 減去剛才的總和` }
+                    { prompt: "剩下的 θ 為多少度？", expected: String(ans), tip: `用 180 減去剛才的總和` }
                 ];
             } else {
                 subType = 'EXT';
                 let a = Math.floor(Math.random()*50)+30; let b = Math.floor(Math.random()*50)+30; ans = a + b; values = [a,b];
-                expr = `已知 <i>ABC</i> 為直線。在 △<i>DAB</i> 中，∠<i>D</i> = ${a}°，∠<i>A</i> = ${b}°。<br>求外角 θ 的度數。`;
+                expr = `已知 <i>ABC</i> 為直線。在 △<i>DAB</i> 中，∠<i>D</i> = ${a}°，∠<i>A</i> = ${b}°。<br>請問 θ 是多少度？`;
                 steps = [
                     { prompt: "外角定理說明外角等於兩個內對角的總和。請問兩角和為？", expected: String(a+b), tip: `計算 ${a} + ${b}` },
                     { prompt: "因此 θ 等於多少度？", expected: String(ans), tip: "外角 = 內對角之和 (ext. ∠ of △)" }
@@ -426,7 +423,7 @@
                 if(givenBase) {
                     subType = 'ISO_BASE';
                     let base = Math.floor(Math.random()*30)+40; ans = 180 - base*2; values = [base];
-                    expr = `已知 △<i>ABC</i> 為等腰三角形，其底角為 ${base}°。<br>請問其頂角 θ 的度數是多少？`;
+                    expr = `已知 △<i>ABC</i> 為等腰三角形，其底角為 ${base}°。<br>請問 θ 是多少度？`;
                     steps = [
                         { prompt: "另一個底角也是多少度？", expected: String(base), tip: "等腰三角形兩底角相等" },
                         { prompt: "兩個底角的總和為：", expected: String(base*2), tip: `計算 ${base} + ${base}` },
@@ -436,7 +433,7 @@
                     subType = 'ISO_TOP';
                     let top = Math.floor(Math.random()*80)+30; ans = (180 - top) / 2;
                     if(ans % 1 !== 0) { top += 1; ans = (180 - top) / 2; } values = [top];
-                    expr = `已知 △<i>ABC</i> 為等腰三角形，其頂角為 ${top}°。<br>請問其底角 θ 的度數是多少？`;
+                    expr = `已知 △<i>ABC</i> 為等腰三角形，其頂角為 ${top}°。<br>請問 θ 是多少度？`;
                     steps = [
                         { prompt: "兩個底角的總和等於多少度？", expected: String(180-top), tip: `用 180 減去頂角 ${top}` },
                         { prompt: "一個底角 θ 等於多少度？", expected: String(ans), tip: `將總和除以 2` }
@@ -445,7 +442,7 @@
             } else {
                 subType = 'EQUILATERAL';
                 ans = 60; values = [];
-                expr = `在一個等邊三角形 (Equilateral Triangle) 中，<br>內角 θ 的度數是多少？`;
+                expr = `在一個等邊三角形 (三邊等長) 中，<br>請問 θ 是多少度？`;
                 steps = [
                     { prompt: "等邊三角形有幾個相等的角？", expected: "3", tip: "三邊相等，三內角也相等" },
                     { prompt: "三角形內角和是多少度？", expected: "180", tip: "所有三角形內角和固定" },
@@ -471,7 +468,7 @@
                 subType = 'EXT_SUM';
                 let edges = [5,6,8,9,10,12,15,18]; let n = edges[Math.floor(Math.random()*edges.length)];
                 ans = 360 / n; values = [n];
-                expr = `已知這是一個<b>正 ${n} 邊形</b>。<br>請問它的「每一個外角 (θ)」是多少度？`;
+                expr = `已知這是一個<b>正 ${n} 邊形</b>。<br>請問 θ (外角) 是多少度？`;
                 steps = [
                     { prompt: "所有多邊形的外角和都是固定的，等於多少度？", expected: "360", tip: "外角和永遠是 360°" },
                     { prompt: "正多邊形的外角都相等，所以每個外角 θ 等於：", expected: String(ans), tip: `將 360 除以邊數 ${n}` }
@@ -762,7 +759,6 @@
         f.innerHTML = session.currentMode==='CHALLENGE' ? "❌ 補答依然有誤。<span style='color:red;'>[挑戰失敗] 積分 -1 分！</span>請點擊下方開啟定理引導教學。" : "❌ 角度計算失敗。請點擊下方開啟引導。";
     }
 
-    // 動態黑板引導邏輯
     function startInteractiveSolving() { 
         document.getElementById('solveBtn').style.display="none"; document.getElementById('teachingZone').style.display="flex"; 
         currentTeachStep = 0; renderMathSteps(); loadTeachingStepUI();
@@ -781,7 +777,6 @@
         let uOp = document.getElementById('stepInput').value.trim();
         let stepObj = geoData.steps[currentTeachStep];
         
-        // 檢查防卡死秒殺
         if(uOp === String(geoData.ans) && currentTeachStep < geoData.steps.length - 1) {
             alert("🚀 聰明！直接算出最終答案！"); executeDirectSuccess(); return;
         }
