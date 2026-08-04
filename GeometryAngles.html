@@ -129,9 +129,10 @@
             <div class="progress-bar-container"><div id="progressBarFill" class="progress-bar-fill"></div></div>
         </div>
         <h2 id="step2Title">請根據提示與圖形計算角度</h2>
+        
         <div class="stage-box" id="displayGeoContainer">
-            <div id="displayGeo">題目載入中...</div>
-            <!-- 動態 Canvas 繪圖區 -->
+            <div id="displayGeo" style="margin-bottom: 5px;">題目載入中...</div>
+            <!-- 動態 Canvas 繪圖區 (教科書標準設定) -->
             <div class="canvas-container">
                 <canvas id="geoCanvas" width="400" height="250"></canvas>
             </div>
@@ -139,7 +140,7 @@
         
         <div id="studentAnswerFormContainer">
             <div class="form-group" id="primaryInputWrapper">
-                <label for="ansInput">請輸入未知的角度大小（不需輸入度數符號）：</label>
+                <label for="ansInput">請輸入未知的角度大小（不需要輸入度數符號）：</label>
                 <input type="number" id="ansInput" placeholder="例如: 65 或 120" autocomplete="off">
             </div>
             <div id="retryInputWrapper" style="display:none; margin-top: 15px; padding-top: 15px; border-top: 2px dashed #cbd5e1;">
@@ -166,7 +167,7 @@
             <div class="progress-bar-container"><div id="progressBarFillStage3" class="progress-bar-fill"></div></div>
         </div>
         <h2 id="step3HeadingTitle">幾何定理與性質推導</h2>
-        <div class="stage-box" id="interactiveStageBox" style="font-size: 22px;">展示台</div>
+        <div class="stage-box" id="interactiveStageBox" style="font-size: 22px; padding: 20px;">展示台</div>
         <div id="feedbackArea" class="feedback"></div>
         <button id="solveBtn" class="btn-warning" onclick="startInteractiveSolving()">🔮 啟動定理引導教學黑板</button>
 
@@ -260,9 +261,10 @@
     let timerInterval = null; let timeLeft = 0;
     let wrongQuestionBank = [];
 
-    // === 動態 Canvas 繪圖引擎 (Geometric Canvas Renderer) ===
-    function drawGeometry() {
-        const canvas = document.getElementById('geoCanvas');
+    // === 動態教科書標準繪圖引擎 (Geometric Canvas Renderer) ===
+    function drawGeometry(canvasId = 'geoCanvas') {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
@@ -280,12 +282,12 @@
         let subType = geoData.subType;
         let vals = geoData.values;
 
-        // 文字繪製幫手
+        // 文字繪製幫手 (斜體代表變數/頂點，正體代表數值)
         function drawMathText(txt, x, y) { ctx.fillStyle = '#000'; ctx.font = 'italic 22px "Times New Roman", Times, serif'; ctx.fillText(txt, x, y); }
         function drawValueText(txt, x, y, color='#000') { ctx.fillStyle = color; ctx.font = '18px "Times New Roman", Times, serif'; ctx.fillText(txt, x, y); }
         function drawArc(x, y, s, e, r) { ctx.beginPath(); ctx.arc(x, y, r, s, e); ctx.stroke(); }
         
-        // 繪製等長標記
+        // 繪製等長標記 (雙撇/單撇)
         function drawTick(x, y, angle) { 
             ctx.save(); ctx.translate(x, y); ctx.rotate(angle); 
             ctx.beginPath(); ctx.moveTo(-5, -8); ctx.lineTo(-5, 8); ctx.moveTo(5, -8); ctx.lineTo(5, 8); ctx.stroke(); 
@@ -302,6 +304,7 @@
                 let A = {x: w/2, y: 40}; let B = {x: 80, y: h-40}; let C = {x: w-80, y: h-40};
                 ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.lineTo(C.x, C.y); ctx.closePath(); ctx.stroke();
                 
+                // 畫角度圓弧
                 drawArc(A.x, A.y, 1.0, 2.14, 30);
                 drawArc(B.x, B.y, -0.9, 0, 30);
                 drawArc(C.x, C.y, Math.PI, Math.PI + 0.9, 30);
@@ -310,7 +313,7 @@
                 drawValueText(`${vals[0]}°`, A.x - 15, A.y + 50); drawValueText(`${vals[1]}°`, B.x + 35, B.y - 10); 
                 drawValueText(`θ`, C.x - 45, C.y - 10, '#ef4444');
             } else {
-                // 外角定理 (教科書排版)
+                // 外角定理 (完美還原 edited-image.png 的構圖)
                 let A = {x: 60, y: h-50}; let B = {x: w-130, y: h-50}; let C = {x: w-40, y: h-50}; let D = {x: 150, y: 40};
                 
                 // 紅色底部重點標線
@@ -352,6 +355,7 @@
                     drawValueText(`θ`, B.x + 40, B.y - 10, '#ef4444');
                 }
             } else {
+                // 等邊三角形
                 let A = {x: w/2, y: 40}; let B = {x: w/2 - 80, y: h-40}; let C = {x: w/2 + 80, y: h-40};
                 ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.lineTo(C.x, C.y); ctx.closePath(); ctx.stroke();
                 
@@ -367,7 +371,7 @@
         else if (typeNum === 3 || typeNum === 4) {
             let sides = typeNum === 3 ? vals[0] : (subType === 'EXT_SUM' ? vals[0] : geoData.ans);
             let cx = w/2, cy = h/2 + 10, r = 80;
-            let drawSides = Math.min(sides, 10); 
+            let drawSides = Math.min(sides, 10); // 保護機制，超過十邊形以十邊形示意
             
             ctx.beginPath();
             for(let i=0; i<=drawSides; i++) {
@@ -442,7 +446,7 @@
             } else {
                 subType = 'EQUILATERAL';
                 ans = 60; values = [];
-                expr = `在一個等邊三角形 (三邊等長) 中，<br>請問 θ 是多少度？`;
+                expr = `在一個等邊三角形 (Equilateral Triangle) 中，<br>請問 θ 是多少度？`;
                 steps = [
                     { prompt: "等邊三角形有幾個相等的角？", expected: "3", tip: "三邊相等，三內角也相等" },
                     { prompt: "三角形內角和是多少度？", expected: "180", tip: "所有三角形內角和固定" },
@@ -596,7 +600,7 @@
             session.currentMode = configMode;
             if (configMode === 'CHALLENGE') { showPanel('step1_challenge'); toggleConditionUI(); }
             else if (configMode === 'POLYGON_TRAINING') {
-                document.getElementById('typeSelect').value = "3";
+                document.getElementById('typeSelect').value = "3"; // 設定為多邊形特訓
                 showPanel('step1_challenge'); toggleConditionUI();
             }
             else if (configMode === 'MAIN') { showPanel('step1'); }
@@ -690,7 +694,7 @@
             }
             
             const step2Title = document.getElementById('step2Title');
-            if(step2Title) step2Title.innerText = (session.currentMode === 'REVIEW') ? "👹 魔王幾何重溫挑戰" : "請根據提示計算角度";
+            if(step2Title) step2Title.innerText = (session.currentMode === 'REVIEW') ? "👹 魔王幾何重溫挑戰" : "請根據提示與圖形計算角度";
 
             setTimeout(() => { 
                 document.getElementById('displayGeo').innerHTML = geoData.expr; 
@@ -740,7 +744,14 @@
     }
 
     function executeDirectSuccess() {
-        document.getElementById('interactiveStageBox').innerHTML = `<span style="white-space: nowrap;">📐 計算成功：<span style="color:#00ff00; font-weight:900;">${geoData.ans}°</span></span>`; 
+        document.getElementById('interactiveStageBox').innerHTML = `
+            <div style="font-size: 18px; margin-bottom: 5px;">${geoData.expr}</div>
+            <div class="canvas-container" style="margin-top: 10px; padding: 15px;">
+                <canvas id="geoCanvasStep3" width="400" height="250"></canvas>
+            </div>
+            <div style="margin-top: 15px;"><span style="white-space: nowrap;">📐 計算成功：<span style="color:#00ff00; font-weight:900;">${geoData.ans}°</span></span></div>
+        `;
+        drawGeometry('geoCanvasStep3'); 
         document.getElementById('teachingZone').style.display="none"; document.getElementById('solveBtn').style.display="none"; document.getElementById('nextBtn').style.display="block";
         let f = document.getElementById('feedbackArea'); f.className="feedback success";
         
@@ -753,7 +764,13 @@
     }
 
     function executeFinalFailure() {
-        document.getElementById('interactiveStageBox').innerHTML = `<span style="font-size: 18px;">${geoData.expr}</span>`; 
+        document.getElementById('interactiveStageBox').innerHTML = `
+            <div style="font-size: 18px; margin-bottom: 5px;">${geoData.expr}</div>
+            <div class="canvas-container" style="margin-top: 10px; padding: 15px;">
+                <canvas id="geoCanvasStep3" width="400" height="250"></canvas>
+            </div>
+        `;
+        drawGeometry('geoCanvasStep3'); 
         document.getElementById('nextBtn').style.display="none"; document.getElementById('solveBtn').style.display="block"; document.getElementById('teachingZone').style.display="none";
         let f=document.getElementById('feedbackArea'); f.className="feedback error"; 
         f.innerHTML = session.currentMode==='CHALLENGE' ? "❌ 補答依然有誤。<span style='color:red;'>[挑戰失敗] 積分 -1 分！</span>請點擊下方開啟定理引導教學。" : "❌ 角度計算失敗。請點擊下方開啟引導。";
@@ -786,7 +803,14 @@
         if (isCorrect) {
             alert("🎯 步驟正確！"); session.wrongAttemptsInTeaching = 0; currentTeachStep++;
             if (currentTeachStep >= geoData.steps.length) {
-                document.getElementById('interactiveStageBox').innerHTML = `<span style="white-space: nowrap;">📐 計算成功：<span style="color:#00ff00; font-weight:900;">${geoData.ans}°</span></span>`;
+                document.getElementById('interactiveStageBox').innerHTML = `
+                    <div style="font-size: 18px; margin-bottom: 5px;">${geoData.expr}</div>
+                    <div class="canvas-container" style="margin-top: 10px; padding: 15px;">
+                        <canvas id="geoCanvasStep3" width="400" height="250"></canvas>
+                    </div>
+                    <div style="margin-top: 15px;"><span style="white-space: nowrap;">📐 計算成功：<span style="color:#00ff00; font-weight:900;">${geoData.ans}°</span></span></div>
+                `;
+                drawGeometry('geoCanvasStep3');
                 document.getElementById('dynamicStepArea').style.display="none"; document.getElementById('nextBtn').style.display="block"; setupNextButtonLabel();
             } else {
                 loadTeachingStepUI();
