@@ -64,9 +64,10 @@
                 <div><div class="dash-icon">🏆</div><div class="dash-title">即時記錄</div></div>
                 <div class="dash-desc">查看全班與個人分解數據報告</div>
             </div>
-            <div class="dash-btn bg-teal id-student-only" onclick="switchSetupConfig('SQUARE_TRAINING')">
-                <div><div class="dash-icon">🎯</div><div class="dash-title">平方差特訓</div></div>
-                <div class="dash-desc">專注訓練 A² - B² 恆等式技巧</div>
+            <!-- 【修改】替換為 因式分解計算機 -->
+            <div class="dash-btn bg-teal id-student-only" onclick="switchSetupConfig('SOLVER')">
+                <div><div class="dash-icon"><i>f(x)</i></div><div class="dash-title">因式分解計算機</div></div>
+                <div class="dash-desc">自訂多項式，啟動智能拆解與引導</div>
             </div>
             <div id="reviewModeCard" class="dash-btn bg-blue id-student-only disabled" onclick="switchSetupConfig('REVIEW')">
                 <div><div class="dash-icon">🗂️</div><div class="dash-title" id="reviewTitle">錯題庫 (0 題)</div></div>
@@ -107,6 +108,16 @@
             </select>
         </div>
         <button onclick="initChallengeSession()" class="btn-success">🎲 生成關卡，出發！</button>
+    </div>
+
+    <!-- 【新增】自訂因式分解計算機輸入面板 -->
+    <div id="step1_solver" class="step-panel">
+        <h2>🛠️ 因式分解有問必答 (自訂化簡)</h2>
+        <div class="form-group">
+            <label for="facInput">✏️ 請輸入需要因式分解的多項式：<br><span style="font-size: 13px; color: #cbd5e1; font-weight: normal;">(支援格式如 `3x^2 + 6x` 或 `x^2 - 5x + 6` 或 `4x^2 - 25`)</span></label>
+            <input type="text" id="facInput" placeholder="例如: x^2 + 5x + 6" autocomplete="off">
+        </div>
+        <button onclick="handleManualSolverInput()" class="btn-success">開始因式分解智能引導</button>
     </div>
 
     <!-- 作答舞台 -->
@@ -263,10 +274,9 @@
         let expr = "", ans = [], steps = [];
 
         if (typeNum === 1) {
-            // 抽公因式
             let isQuad = Math.random() > 0.5;
             if(!isQuad) {
-                let a = Math.floor(Math.random()*6)+2; // 2~7
+                let a = Math.floor(Math.random()*6)+2; 
                 expr = `${a}x + ${a}y`;
                 ans = [`${a}(x+y)`, `${a}(y+x)`];
                 steps = [
@@ -286,7 +296,6 @@
             return JSON.stringify({ typeNum, title: "抽公因式", expr, ans, steps });
         } 
         else if (typeNum === 2) {
-            // 併項法 x^2 + ax + bx + ab
             let a = Math.floor(Math.random()*5)+2;
             let b = Math.floor(Math.random()*5)+2;
             expr = `x^2 + ${a}x + ${b}x + ${a*b}`;
@@ -299,9 +308,8 @@
             return JSON.stringify({ typeNum, title: "併項法", expr, ans, steps });
         }
         else if (typeNum === 3) {
-            // 平方差 a^2 x^2 - c^2
-            let a = Math.floor(Math.random()*4)+1; // 1~4
-            let c = Math.floor(Math.random()*9)+2; // 2~10
+            let a = Math.floor(Math.random()*4)+1; 
+            let c = Math.floor(Math.random()*9)+2; 
             expr = a === 1 ? `x^2 - ${c*c}` : `${a*a}x^2 - ${c*c}`;
             let axStr = a === 1 ? "x" : `${a}x`;
             ans = [`(${axStr}+${c})(${axStr}-${c})`, `(${axStr}-${c})(${axStr}+${c})`];
@@ -313,10 +321,9 @@
             return JSON.stringify({ typeNum, title: "平方差恆等式", expr, ans, steps });
         }
         else {
-            // 十字相乘 x^2 + Bx + C
             let m = Math.floor(Math.random()*11)-5; if(m===0) m=6;
             let n = Math.floor(Math.random()*11)-5; if(n===0) n=7;
-            if(m===-n) n+=1; // prevent diff of squares
+            if(m===-n) n+=1; 
             let sum = m+n; let prod = m*n;
             expr = `x^2 ${formatTerm(sum, "x", false)} ${formatTerm(prod, "", false)}`;
             expr = expr.replace(/\s+/g,' ');
@@ -444,10 +451,7 @@
         try {
             session.currentMode = configMode;
             if (configMode === 'CHALLENGE') { showPanel('step1_challenge'); toggleConditionUI(); }
-            else if (configMode === 'SQUARE_TRAINING') {
-                document.getElementById('typeSelect').value = "3"; // 強制設定為平方差
-                showPanel('step1_challenge'); toggleConditionUI();
-            }
+            else if (configMode === 'SOLVER') { showPanel('step1_solver'); }
             else if (configMode === 'MAIN') { showPanel('step1'); }
             else if (configMode === 'STATS') { calculateAndRenderStats(); showPanel('step_stats_panel'); }
             else if (configMode === 'REVIEW') {
@@ -513,6 +517,106 @@
         } catch(e) { console.error(e); }
     }
 
+    // === 自訂輸入解析邏輯 ===
+    function handleManualSolverInput() {
+        let inputStr = document.getElementById('facInput').value.replace(/\s+/g,'').replace(/²/g, '^2');
+        if(!inputStr) { alert("請輸入有效的多項式！"); return; }
+        
+        session.currentMode = 'SOLVER'; 
+        session.totalQuestions = 1; 
+        session.currentIdx = 0;
+        
+        let typeNum = 1; let title = "自訂因式分解"; let ans = []; let steps = [];
+        
+        // 簡易的正則判斷引擎
+        if (inputStr.includes('^2') && (inputStr.match(/[+-]/g) || []).length === 1 && inputStr.includes('-')) {
+            // 平方差判定 (例: x^2 - 16 或 4x^2 - 25)
+            typeNum = 3; title = "平方差解析";
+            let parts = inputStr.split('-');
+            let aStr = parts[0].includes('x^2') ? parts[0].replace('x^2', '') : '';
+            let aCoef = aStr === '' ? 1 : Math.sqrt(parseInt(aStr));
+            let cCoef = Math.sqrt(parseInt(parts[1]));
+            let axTerm = aCoef === 1 ? 'x' : `${aCoef}x`;
+            
+            if(Number.isInteger(aCoef) && Number.isInteger(cCoef)) {
+                ans = [`(${axTerm}+${cCoef})(${axTerm}-${cCoef})`, `(${axTerm}-${cCoef})(${axTerm}+${cCoef})`];
+                steps = [
+                    { prompt: "此式為 A² - B²，請問 A 是：", expected: [axTerm], tip: `什麼的平方會等於 ${parts[0]}？` },
+                    { prompt: "請問 B 是：", expected: [cCoef.toString()], tip: `什麼的平方會等於 ${parts[1]}？` },
+                    { prompt: "套用 (A+B)(A-B) 最終結果：", expected: ans, tip: "將剛才找到的 A 和 B 放入公式中" }
+                ];
+            } else { alert("此模式支援完全平方數解析，請輸入如 x^2-16 的格式！"); return; }
+        } 
+        else if (inputStr.includes('^2') && (inputStr.match(/[+-]/g) || []).length === 2) {
+            // 十字相乘判定 (例: x^2 - 5x + 6)
+            typeNum = 4; title = "十字相乘解析";
+            let terms = inputStr.replace(/-/g, '+-').split('+').filter(Boolean);
+            let b = 0, c = 0;
+            terms.forEach(t => {
+                if(t.includes('x^2')) return;
+                if(t.includes('x')) { let co = t.replace('x',''); b = co===''?1:(co==='-'?-1:parseInt(co)); }
+                else { c = parseInt(t); }
+            });
+            
+            // 窮舉法找 m, n
+            let m=0, n=0, found=false;
+            for(let i=-Math.abs(c); i<=Math.abs(c); i++) {
+                if(i===0) continue;
+                if(c % i === 0) {
+                    let j = c / i;
+                    if(i + j === b) { m=i; n=j; found=true; break; }
+                }
+            }
+            if(found) {
+                let mStr = m>0 ? `+${m}` : `${m}`; let nStr = n>0 ? `+${n}` : `${n}`;
+                ans = [`(x${mStr})(x${nStr})`, `(x${nStr})(x${mStr})`];
+                if(m === n) ans.push(`(x${mStr})^2`);
+                steps = [
+                    { prompt: "常數項 (C) 是多少？", expected: [c.toString()], tip: "最後面的數字" },
+                    { prompt: "x 的係數 (B) 是多少？", expected: [b.toString()], tip: "x 前面的數字" },
+                    { prompt: "哪兩數相乘為 C，相加為 B？(逗號隔開)", expected: [`${m},${n}`, `${n},${m}`], tip: `相乘=${c}，相加=${b}` },
+                    { prompt: "最終分解結果：", expected: ans, tip: "寫成 (x+...)(x+...) 的形式" }
+                ];
+            } else { alert("找不到整數解，本計算機僅支援能十字相乘的基礎題型！"); return; }
+        } 
+        else {
+            // 預設當作抽公因式
+            typeNum = 1; title = "公因式解析";
+            let terms = inputStr.replace(/-/g, '+-').split('+').filter(Boolean);
+            let coefs = [], vars = [];
+            terms.forEach(t => {
+                let num = parseInt(t) || (t.includes('-')?-1:1);
+                coefs.push(Math.abs(num));
+                if(t.includes('x^2')) vars.push(2); else if(t.includes('x')) vars.push(1); else vars.push(0);
+            });
+            
+            let gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+            let cGcd = coefs.reduce((a, b) => gcd(a, b));
+            let vMin = Math.min(...vars);
+            
+            let outC = cGcd===1 && vMin>0 ? "" : cGcd;
+            let outV = vMin===2 ? "x^2" : (vMin===1 ? "x" : "");
+            let commonFactor = `${outC}${outV}`;
+            
+            let inside = terms.map((t, idx) => {
+                let num = (parseInt(t) || (t.includes('-')?-1:1)) / cGcd;
+                let v = vars[idx] - vMin;
+                let vStr = v===2 ? "x^2" : (v===1 ? "x" : "");
+                let cStr = (Math.abs(num)===1 && vStr!=="") ? (num>0?"":"-") : num;
+                return (idx>0 && num>0 ? "+" : "") + cStr + vStr;
+            }).join('');
+            
+            ans = [`${commonFactor}(${inside})`];
+            steps = [
+                { prompt: "請找出各項的公因式：", expected: [commonFactor], tip: "找出數字的最大公因數和共同變數" },
+                { prompt: "提取後的最終結果：", expected: ans, tip: `括號外寫 ${commonFactor}，括號內寫剩餘項` }
+            ];
+        }
+
+        session.questionList = [JSON.stringify({ typeNum, title, expr: inputStr, ans, steps })];
+        loadQuestionToStage();
+    }
+
     function loadQuestionToStage() {
         try {
             document.getElementById('ansInput').value = '';
@@ -543,7 +647,6 @@
         } catch(e) { console.error(e); showPanel('step2'); }
     }
 
-    // 智能字串正規化比對
     function normalizeUser(str) {
         return str.replace(/[\s\*]+/g, '').toLowerCase().replace(/²/g, '^2');
     }
@@ -606,7 +709,6 @@
         f.innerHTML = session.currentMode==='CHALLENGE' ? "❌ 補答依然有誤。<span style='color:red;'>[挑戰失敗] 積分 -1 分！</span>請點擊下方開啟分步引導教學。" : "❌ 分解失敗。請點擊下方開啟引導。";
     }
 
-    // 動態黑板引導邏輯
     function startInteractiveSolving() { 
         document.getElementById('solveBtn').style.display="none"; document.getElementById('teachingZone').style.display="flex"; 
         currentTeachStep = 0; renderMathSteps(); loadTeachingStepUI();
@@ -625,7 +727,6 @@
         let uOp = normalizeUser(document.getElementById('stepInput').value);
         let stepObj = facData.steps[currentTeachStep];
         
-        // 檢查是否直接輸入了最終答案 (防卡死秒殺)
         let isFinalMatch = facData.ans.some(e => normalizeUser(e) === uOp);
         if(isFinalMatch && currentTeachStep < facData.steps.length - 1) {
             alert("🚀 聰明！直接看出最終答案！"); executeDirectSuccess(); return;
@@ -667,13 +768,13 @@
 
     function setupNextButtonLabel() { 
         let n = document.getElementById('nextBtn'); 
-        if(session.currentMode==='CHALLENGE' || session.currentMode==='SQUARE_TRAINING') { n.innerText = (session.endCondition==='TIME_LIMIT') ? "下一道瘋狂挑戰題 ➡️" : ((session.currentIdx < session.questionList.length-1)?"前進下一題 ➡️":"🏁 挑戰結束，查看報告"); } 
+        if(session.currentMode==='CHALLENGE') { n.innerText = (session.endCondition==='TIME_LIMIT') ? "下一道瘋狂挑戰題 ➡️" : ((session.currentIdx < session.questionList.length-1)?"前進下一題 ➡️":"🏁 挑戰結束，查看報告"); } 
         else if(session.currentMode==='REVIEW') n.innerText = (session.currentIdx === session.totalQuestions-1 || wrongQuestionBank.length===0)?"🏁 結束溫習返回目錄":"下一道魔王關卡 ➡️"; 
         else n.innerText="↩️ 返回選單"; 
     }
 
     function advanceQuestion() { 
-        if(session.currentMode==='CHALLENGE' || session.currentMode==='SQUARE_TRAINING') { 
+        if(session.currentMode==='CHALLENGE') { 
             if(session.endCondition==='COUNT') { 
                 if(session.currentIdx < session.questionList.length-1) { session.currentIdx++; loadQuestionToStage(); } 
                 else { calculateAndRenderStats(); showPanel('step_stats_panel'); } 
@@ -687,7 +788,7 @@
 
     function updateProgressBarUI() { 
         let pct = 0; let txt = ""; 
-        if (session.currentMode === 'CHALLENGE' || session.currentMode==='SQUARE_TRAINING') { 
+        if (session.currentMode === 'CHALLENGE') { 
             if (session.endCondition === 'COUNT') { pct = Math.round(((session.currentIdx + 1) / session.totalQuestions) * 100); txt = `關卡進度: ${session.currentIdx + 1} / ${session.totalQuestions}`; } 
             else { pct = Math.round((timeLeft / session.timeLimitSetting) * 100); txt = `⏳ 限時衝刺中...`; } 
         } else if (session.currentMode === 'REVIEW') { pct = Math.round(((session.currentIdx + 1) / session.totalQuestions) * 100); txt = `錯題庫復原: ${session.currentIdx + 1}/${session.totalQuestions}`; } 
