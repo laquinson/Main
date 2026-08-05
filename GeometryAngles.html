@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>中一幾何角計算系統 (精準動態多邊形版)</title>
+    <title>中一幾何角計算系統 (終極精準繪圖版)</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🪐</text></svg>">
     <style>
         :root { --primary: #3b82f6; --primary-hover: #1d4ed8; --success: #10b981; --danger: #ef4444; --warning: #f59e0b; --info: #06b6d4; --stage-bg: #0f172a; --bg: #f8fafc; --teacher-color: #8b5cf6; --card-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2); --glass-bg: rgba(255, 255, 255, 0.12); --glass-border: 1px solid rgba(255, 255, 255, 0.25); --glass-blur: blur(14px); }
@@ -85,7 +85,7 @@
             <select id="typeSelect" title="選擇題型">
                 <option value="1">1. 三角形內角和與外角定理</option>
                 <option value="2">2. 等腰與等邊三角形性質</option>
-                <option value="3">3. 多邊形內角和與內角</option>
+                <option value="3">3. 多邊形內角和與內角計算</option>
                 <option value="4">4. 多邊形外角與正多邊形</option>
                 <option value="MIX" selected>5. 🔀 綜合幾何大亂鬥</option>
             </select>
@@ -321,9 +321,8 @@
             }
         }
         else if (typeNum === 3) {
-            // 動態精準繪製 n 邊形內角和圖形
-            let sides = vals[0];
-            let cx = w/2, cy = h/2, r = 80;
+            let sides = (vals && vals.length > 0) ? vals[0] : 5;
+            let cx = w/2, cy = h/2 + 10, r = 80;
             let drawSides = Math.min(sides, 12); 
             
             let pts = [];
@@ -332,39 +331,37 @@
                 pts.push({x: cx + r * Math.cos(theta), y: cy + r * Math.sin(theta)});
             }
             
-            ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+            ctx.beginPath();
+            ctx.moveTo(pts[0].x, pts[0].y);
             for(let i=1; i<drawSides; i++) { ctx.lineTo(pts[i].x, pts[i].y); }
             
-            if (sides > 12 || subType === 'POLY_INT_SUM') {
-                ctx.stroke(); ctx.setLineDash([5, 5]); ctx.beginPath(); ctx.moveTo(pts[drawSides-1].x, pts[drawSides-1].y); ctx.lineTo(pts[0].x, pts[0].y); ctx.stroke(); ctx.setLineDash([]);
+            if (sides > 12) {
+                ctx.stroke();
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath(); ctx.moveTo(pts[drawSides-1].x, pts[drawSides-1].y); ctx.lineTo(pts[0].x, pts[0].y); ctx.stroke();
+                ctx.setLineDash([]);
             } else {
-                ctx.closePath(); ctx.stroke();
+                ctx.closePath();
+                ctx.stroke();
             }
             
             if (subType === 'POLY_INT_REG') {
-                // 正多邊形: 只畫單一未知內角
+                // 正多邊形求單一內角：只畫「一個」標示 θ 的內角弧線
                 let p0 = pts[drawSides-1]; let p1 = pts[0]; let p2 = pts[1];
                 let a1 = Math.atan2(p0.y - p1.y, p0.x - p1.x); let a2 = Math.atan2(p2.y - p1.y, p2.x - p1.x);
                 ctx.beginPath(); ctx.arc(p1.x, p1.y, 20, a2, a1, true); ctx.stroke();
                 let angToCenter = Math.atan2(cy - p1.y, cx - p1.x);
                 drawMathText('θ', p1.x + 35*Math.cos(angToCenter) - 10, p1.y + 35*Math.sin(angToCenter) + 8, '#ef4444');
-            } else {
-                // 一般多邊形內角和: 畫所有角 a1 ~ an
-                const subs = ['₁','₂','₃','₄','₅','₆','₇','₈','₉','₁₀','₁₁','₁₂'];
-                for(let i=0; i<drawSides; i++) {
-                    let p0 = pts[(i-1+drawSides)%drawSides]; let p1 = pts[i]; let p2 = pts[(i+1)%drawSides];
-                    let a1 = Math.atan2(p0.y - p1.y, p0.x - p1.x); let a2 = Math.atan2(p2.y - p1.y, p2.x - p1.x);
-                    ctx.beginPath(); ctx.arc(p1.x, p1.y, 20, a2, a1, true); ctx.stroke();
-                    let angToCenter = Math.atan2(cy - p1.y, cx - p1.x);
-                    let subStr = subs[i];
-                    if (i === drawSides - 1 && (sides > 12 || subType === 'POLY_INT_SUM')) subStr = 'ₙ';
-                    drawMathText(`a${subStr}`, p1.x + 35*Math.cos(angToCenter) - 10, p1.y + 35*Math.sin(angToCenter) + 8);
-                }
+            } else if (subType === 'POLY_INT_SUM') {
+                // 一般/正多邊形內角和：乾淨畫面，不需要畫弧線與 a1...an 標示
             }
+            
+            ctx.fillStyle = '#000'; ctx.font = 'bold 16px "Times New Roman", Times, serif';
+            ctx.fillText(sides > 12 ? `正 ${sides} 邊形示意圖` : `正 ${sides} 邊形`, 10, h - 10);
         }
         else if (typeNum === 4) {
-            let sides = (subType === 'EXT_SUM') ? vals[0] : geoData.ans;
-            let cx = w/2, cy = h/2, r = 70;
+            let sides = (subType === 'EXT_SUM') ? ((vals && vals.length > 0) ? vals[0] : 5) : geoData.ans;
+            let cx = w/2, cy = h/2 + 10, r = 70;
             let drawSides = Math.min(sides, 12); 
             
             let pts = [];
@@ -391,6 +388,8 @@
                     drawValueText(lbl, p1.x + 30*Math.cos(midAng) - 10, p1.y + 30*Math.sin(midAng) + 5, isTheta ? '#ef4444' : '#000');
                 }
             }
+            ctx.fillStyle = '#000'; ctx.font = 'bold 16px "Times New Roman", Times, serif';
+            ctx.fillText(sides > 12 ? `正 ${sides} 邊形示意圖` : `正 ${sides} 邊形`, 10, h - 10);
         }
     }
 
@@ -460,11 +459,11 @@
             let isRegular = Math.random() > 0.5;
             if (isRegular) {
                 subType = 'POLY_INT_REG';
-                let validN = [5, 6, 8, 9, 10, 12, 15, 18];
+                let validN = [5, 6, 8, 9, 10, 12, 15, 18, 20, 24];
                 let n = validN[Math.floor(Math.random()*validN.length)];
                 ans = ((n - 2) * 180) / n;
                 values = [n];
-                expr = `已知這是一個<b>正 ${n} 邊形</b>。<br>請問 θ (一個內角) 是多少度？`;
+                expr = `已知這是一個<b>正 ${n} 邊形</b>。<br>請問 θ 是多少度？`;
                 steps = [
                     { prompt: `多邊形內角和公式為 (n-2)×180°，此正 ${n} 邊形的內角和為：`, expected: String((n-2)*180), tip: `計算 (${n}-2) × 180` },
                     { prompt: "正多邊形各內角相等，所以每個內角 θ 等於：", expected: String(ans), tip: `將內角和除以邊數 ${n}` }
@@ -473,7 +472,7 @@
                 subType = 'POLY_INT_SUM';
                 let n = Math.floor(Math.random()*8)+5; // 5~12 邊形
                 values = [n]; ans = (n - 2) * 180;
-                expr = `請問一個 <b>${n} 邊形</b> 的內角和總共是多少度？`;
+                expr = `請問一個 <b>正 ${n} 邊形</b> 的內角和總共是多少度？`;
                 steps = [
                     { prompt: "計算內角和的公式是 (n - ?) × 180°，請問 ? 是多少？", expected: "2", tip: "公式為 (n-2) × 180°" },
                     { prompt: `將邊數 ${n} 代入，(n - 2) 的值是：`, expected: String(n-2), tip: `計算 ${n} - 2` },
@@ -616,7 +615,7 @@
             session.currentMode = configMode;
             if (configMode === 'CHALLENGE') { showPanel('step1_challenge'); toggleConditionUI(); }
             else if (configMode === 'POLYGON_TRAINING') {
-                document.getElementById('typeSelect').value = "3";
+                document.getElementById('typeSelect').value = "3"; // 設定為多邊形特訓
                 showPanel('step1_challenge'); toggleConditionUI();
             }
             else if (configMode === 'MAIN') { showPanel('step1'); }
@@ -710,7 +709,7 @@
             }
             
             const step2Title = document.getElementById('step2Title');
-            if(step2Title) step2Title.innerText = (session.currentMode === 'REVIEW') ? "👹 魔王幾何重溫挑戰" : "請根據提示計算角度";
+            if(step2Title) step2Title.innerText = (session.currentMode === 'REVIEW') ? "👹 魔王幾何重溫挑戰" : "請根據提示與圖形計算角度";
 
             setTimeout(() => { 
                 document.getElementById('displayGeo').innerHTML = geoData.expr; 
