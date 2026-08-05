@@ -268,6 +268,7 @@
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
+        // 教科書標準: 白底黑邊，圓滑端點
         canvas.style.backgroundColor = '#ffffff';
         ctx.lineWidth = 2;
         ctx.strokeStyle = '#000000';
@@ -281,49 +282,122 @@
         let subType = geoData.subType;
         let vals = geoData.values;
 
+        // 文字繪製幫手 (斜體代表變數/頂點，正體代表數值)
         function drawMathText(txt, x, y, color='#000') { ctx.fillStyle = color; ctx.font = 'italic 22px "Times New Roman", Times, serif'; ctx.fillText(txt, x, y); }
         function drawValueText(txt, x, y, color='#000') { ctx.fillStyle = color; ctx.font = '18px "Times New Roman", Times, serif'; ctx.fillText(txt, x, y); }
         function drawArc(x, y, s, e, r) { ctx.beginPath(); ctx.arc(x, y, r, s, e); ctx.stroke(); }
-        function drawDoubleArc(x, y, s, e, r) { ctx.beginPath(); ctx.arc(x, y, r, s, e); ctx.stroke(); ctx.beginPath(); ctx.arc(x, y, r - 6, s, e); ctx.stroke(); }
-        function drawTick(x, y, angle) { ctx.save(); ctx.translate(x, y); ctx.rotate(angle); ctx.beginPath(); ctx.moveTo(-5, -8); ctx.lineTo(-5, 8); ctx.moveTo(5, -8); ctx.lineTo(5, 8); ctx.stroke(); ctx.restore(); }
-        function drawSingleTick(x, y, angle) { ctx.save(); ctx.translate(x, y); ctx.rotate(angle); ctx.beginPath(); ctx.moveTo(0, -8); ctx.lineTo(0, 8); ctx.stroke(); ctx.restore(); }
+        
+        // 雙弧線繪製，用於表示角度相等
+        function drawDoubleArc(x, y, s, e, r) { 
+            ctx.beginPath(); ctx.arc(x, y, r, s, e); ctx.stroke(); 
+            ctx.beginPath(); ctx.arc(x, y, r - 6, s, e); ctx.stroke(); 
+        }
+        
+        // 繪製等長標記 (雙撇/單撇)
+        function drawTick(x, y, angle) { 
+            ctx.save(); ctx.translate(x, y); ctx.rotate(angle); 
+            ctx.beginPath(); ctx.moveTo(-5, -8); ctx.lineTo(-5, 8); ctx.moveTo(5, -8); ctx.lineTo(5, 8); ctx.stroke(); 
+            ctx.restore(); 
+        }
+        function drawSingleTick(x, y, angle) { 
+            ctx.save(); ctx.translate(x, y); ctx.rotate(angle); 
+            ctx.beginPath(); ctx.moveTo(0, -8); ctx.lineTo(0, 8); ctx.stroke(); 
+            ctx.restore(); 
+        }
+
+        // 繪製延長線及其對應的外角弧與標籤
+        function drawExtLineAndArc(pA, pB, pC, label, isTheta=false) {
+            let dx = pB.x - pA.x; let dy = pB.y - pA.y;
+            let len = Math.sqrt(dx*dx + dy*dy);
+            let ex = pB.x + (dx/len)*35;
+            let ey = pB.y + (dy/len)*35;
+            ctx.beginPath(); ctx.moveTo(pB.x, pB.y); ctx.lineTo(ex, ey); ctx.stroke();
+            
+            let a1 = Math.atan2(dy, dx);
+            let a2 = Math.atan2(pC.y - pB.y, pC.x - pB.x);
+            
+            ctx.beginPath();
+            ctx.arc(pB.x, pB.y, 20, a2, a1, true);
+            ctx.stroke();
+
+            let color = isTheta ? '#ef4444' : '#000';
+            let midAng = (a1 + a2)/2; 
+            if(Math.abs(a1-a2) > Math.PI) midAng += Math.PI;
+            
+            drawMathText(label, pB.x + 30*Math.cos(midAng) - 5, pB.y + 30*Math.sin(midAng) + 5, color);
+        }
 
         if(typeNum === 1) {
             if(subType === 'INT') {
                 let A = {x: w/2, y: 40}; let B = {x: 80, y: h-40}; let C = {x: w-80, y: h-40};
                 ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.lineTo(C.x, C.y); ctx.closePath(); ctx.stroke();
-                drawArc(A.x, A.y, 1.0, 2.14, 30); drawArc(B.x, B.y, -0.9, 0, 30); drawArc(C.x, C.y, Math.PI, Math.PI + 0.9, 30);
+                
+                drawArc(A.x, A.y, 1.0, 2.14, 30);
+                drawArc(B.x, B.y, -0.9, 0, 30);
+                drawArc(C.x, C.y, Math.PI, Math.PI + 0.9, 30);
+                
                 drawMathText('A', A.x - 10, A.y - 10); drawMathText('B', B.x - 20, B.y + 20); drawMathText('C', C.x + 5, C.y + 20);
-                drawValueText(`${vals[0]}°`, A.x - 15, A.y + 50); drawValueText(`${vals[1]}°`, B.x + 35, B.y - 10); drawMathText(`θ`, C.x - 45, C.y - 10, '#ef4444');
+                drawValueText(`${vals[0]}°`, A.x - 15, A.y + 50); drawValueText(`${vals[1]}°`, B.x + 35, B.y - 10); 
+                drawMathText(`θ`, C.x - 45, C.y - 10, '#ef4444');
             } else {
                 let A = {x: 60, y: h-50}; let B = {x: w-130, y: h-50}; let C = {x: w-40, y: h-50}; let D = {x: 150, y: 40};
-                ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(C.x, C.y); ctx.stroke();
-                ctx.strokeStyle = '#000000'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(D.x, D.y); ctx.lineTo(B.x, B.y); ctx.stroke();
-                drawArc(A.x, A.y, -1.0, 0, 30); drawArc(D.x, D.y, 0.9, 2.1, 30); drawArc(B.x, B.y, Math.PI + 1.05, 0, 25);
+                
+                ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(C.x, C.y); ctx.stroke();
+                
+                ctx.strokeStyle = '#000000'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(D.x, D.y); ctx.lineTo(B.x, B.y); ctx.stroke();
+                
+                drawArc(A.x, A.y, -1.0, 0, 30);
+                drawArc(D.x, D.y, 0.9, 2.1, 30);
+                drawArc(B.x, B.y, Math.PI + 1.05, 0, 25);
+                
                 drawMathText('A', A.x - 25, A.y + 10); drawMathText('B', B.x - 10, B.y + 25); drawMathText('C', C.x + 10, C.y + 10); drawMathText('D', D.x - 10, D.y - 10);
-                drawValueText(`${vals[0]}°`, D.x - 15, D.y + 45); drawValueText(`${vals[1]}°`, A.x + 35, A.y - 5); drawMathText(`θ`, B.x + 15, B.y - 30, '#ef4444');
+                drawValueText(`${vals[0]}°`, D.x - 15, D.y + 45); drawValueText(`${vals[1]}°`, A.x + 35, A.y - 5); 
+                drawMathText(`θ`, B.x + 15, B.y - 30, '#ef4444');
             }
         }
         else if (typeNum === 2) {
             if(subType === 'ISO_BASE' || subType === 'ISO_TOP') {
                 let A = {x: w/2, y: 40}; let B = {x: 100, y: h-40}; let C = {x: w-100, y: h-40};
                 ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.lineTo(C.x, C.y); ctx.closePath(); ctx.stroke();
-                drawTick((A.x+B.x)/2, (A.y+B.y)/2, Math.atan2(B.y-A.y, B.x-A.x)); drawTick((A.x+C.x)/2, (A.y+C.y)/2, Math.atan2(C.y-A.y, C.x-A.x));
-                drawArc(A.x, A.y, 1.1, 2.04, 35); drawDoubleArc(B.x, B.y, -1.1, 0, 35); drawDoubleArc(C.x, C.y, Math.PI, Math.PI + 1.1, 35);
+                
+                drawTick((A.x+B.x)/2, (A.y+B.y)/2, Math.atan2(B.y-A.y, B.x-A.x));
+                drawTick((A.x+C.x)/2, (A.y+C.y)/2, Math.atan2(C.y-A.y, C.x-A.x));
+                
+                drawArc(A.x, A.y, 1.1, 2.04, 35);
+                drawDoubleArc(B.x, B.y, -1.1, 0, 35);
+                drawDoubleArc(C.x, C.y, Math.PI, Math.PI + 1.1, 35);
+
                 drawMathText('A', A.x - 10, A.y - 10); drawMathText('B', B.x - 20, B.y + 20); drawMathText('C', C.x + 5, C.y + 20);
-                if(subType === 'ISO_BASE') { drawValueText(`${vals[0]}°`, B.x + 40, B.y - 10); drawMathText(`θ`, A.x - 5, A.y + 55, '#ef4444'); } 
-                else { drawValueText(`${vals[0]}°`, A.x - 15, A.y + 55); drawMathText(`θ`, B.x + 40, B.y - 10, '#ef4444'); }
+                
+                if(subType === 'ISO_BASE') {
+                    drawValueText(`${vals[0]}°`, B.x + 40, B.y - 10);
+                    drawMathText(`θ`, A.x - 5, A.y + 55, '#ef4444');
+                } else {
+                    drawValueText(`${vals[0]}°`, A.x - 15, A.y + 55);
+                    drawMathText(`θ`, B.x + 40, B.y - 10, '#ef4444');
+                }
             } else {
                 let A = {x: w/2, y: 40}; let B = {x: w/2 - 80, y: h-40}; let C = {x: w/2 + 80, y: h-40};
                 ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.lineTo(C.x, C.y); ctx.closePath(); ctx.stroke();
-                drawSingleTick((A.x+B.x)/2, (A.y+B.y)/2, Math.atan2(B.y-A.y, B.x-A.x)); drawSingleTick((A.x+C.x)/2, (A.y+C.y)/2, Math.atan2(C.y-A.y, C.x-A.x)); drawSingleTick((B.x+C.x)/2, (B.y+C.y)/2, 0);
-                drawDoubleArc(A.x, A.y, 1.08, 2.06, 35); drawDoubleArc(B.x, B.y, -1.08, 0, 35); drawDoubleArc(C.x, C.y, Math.PI, Math.PI + 1.08, 35);
-                drawMathText('A', A.x - 10, A.y - 10); drawMathText('B', B.x - 20, B.y + 20); drawMathText('C', C.x + 5, C.y + 20); drawMathText(`θ`, B.x + 40, B.y - 10, '#ef4444');
+                
+                drawSingleTick((A.x+B.x)/2, (A.y+B.y)/2, Math.atan2(B.y-A.y, B.x-A.x));
+                drawSingleTick((A.x+C.x)/2, (A.y+C.y)/2, Math.atan2(C.y-A.y, C.x-A.x));
+                drawSingleTick((B.x+C.x)/2, (B.y+C.y)/2, 0);
+                
+                drawDoubleArc(A.x, A.y, 1.08, 2.06, 35);
+                drawDoubleArc(B.x, B.y, -1.08, 0, 35);
+                drawDoubleArc(C.x, C.y, Math.PI, Math.PI + 1.08, 35);
+
+                drawMathText('A', A.x - 10, A.y - 10); drawMathText('B', B.x - 20, B.y + 20); drawMathText('C', C.x + 5, C.y + 20);
+                drawMathText(`θ`, B.x + 40, B.y - 10, '#ef4444');
             }
         }
         else if (typeNum === 3) {
             let sides = (vals && vals.length > 0) ? vals[0] : 5;
             let cx = w/2, cy = h/2 + 10, r = 80;
+            // 限制最大繪製邊數，防止圖形擠成圓形
             let drawSides = Math.min(sides, 12); 
             
             let pts = [];
@@ -336,6 +410,7 @@
             ctx.moveTo(pts[0].x, pts[0].y);
             for(let i=1; i<drawSides; i++) { ctx.lineTo(pts[i].x, pts[i].y); }
             
+            // 只有當「大於 12 邊形」時，才留一個虛線缺口示意
             if (sides > 12) {
                 ctx.stroke();
                 ctx.setLineDash([5, 5]);
@@ -346,29 +421,17 @@
                 ctx.stroke();
             }
             
+            // 畫其中一個內角弧線
+            let p0 = pts[drawSides-1]; let p1 = pts[0]; let p2 = pts[1];
+            let a1 = Math.atan2(p0.y - p1.y, p0.x - p1.x); let a2 = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+            ctx.beginPath(); ctx.arc(p1.x, p1.y, 20, a2, a1, false); ctx.stroke();
+
             if (subType === 'POLY_INT_REG') {
-                // 正多邊形：完全閉合且只畫「一個」標示 θ 的內角 (把方向改成 false 修正泡泡外翻)
-                let p0 = pts[drawSides-1]; let p1 = pts[0]; let p2 = pts[1];
-                let a1 = Math.atan2(p0.y - p1.y, p0.x - p1.x); let a2 = Math.atan2(p2.y - p1.y, p2.x - p1.x);
-                ctx.beginPath(); ctx.arc(p1.x, p1.y, 20, a2, a1, false); ctx.stroke();
+                // 如果是正多邊形求單一角，標示 θ
                 let angToCenter = Math.atan2(cy - p1.y, cx - p1.x);
                 drawMathText('θ', p1.x + 35*Math.cos(angToCenter) - 10, p1.y + 35*Math.sin(angToCenter) + 8, '#ef4444');
-            } else {
-                // 一般多邊形內角和：畫出「所有」內角並標示 a1...an (把方向改成 false 修正泡泡外翻)
-                const subs = ['₁','₂','₃','₄','₅','₆','₇','₈','₉','₁₀','₁₁','₁₂'];
-                for(let i=0; i<drawSides; i++) {
-                    let p0 = pts[(i-1+drawSides)%drawSides]; let p1 = pts[i]; let p2 = pts[(i+1)%drawSides];
-                    let a1 = Math.atan2(p0.y - p1.y, p0.x - p1.x); let a2 = Math.atan2(p2.y - p1.y, p2.x - p1.x);
-                    ctx.beginPath(); ctx.arc(p1.x, p1.y, 20, a2, a1, false); ctx.stroke();
-                    
-                    let angToCenter = Math.atan2(cy - p1.y, cx - p1.x);
-                    let subStr = subs[i];
-                    if (i === drawSides - 1 && sides > 12) subStr = 'ₙ'; // 超過12邊形的最後一個角標示為 an
-                    else if (i === drawSides - 1) subStr = subs[sides-1]; 
-                    
-                    drawMathText(`a${subStr}`, p1.x + 35*Math.cos(angToCenter) - 10, p1.y + 35*Math.sin(angToCenter) + 8);
-                }
             }
+            
             ctx.fillStyle = '#000'; ctx.font = 'bold 16px "Times New Roman", Times, serif';
             ctx.fillText(sides > 12 ? `${sides} 邊形示意圖` : `${sides} 邊形`, 10, h - 10);
         }
