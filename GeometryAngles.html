@@ -242,6 +242,7 @@
     let currentRole = "STUDENT", userRawClass = "", userRawSeat = "";
     let currentPanelId = "step1"; 
     
+    // 強制完整預設結構
     let cacheStorage = {
         GEO: { 
             wrongBook: [], 
@@ -346,18 +347,30 @@
             }
             
             if (subType === 'POLY_INT_REG') {
-                // 正多邊形求單一內角：只畫「一個」標示 θ 的內角弧線
+                // 正多邊形：完全閉合且只畫「一個」標示 θ 的內角 (把方向改成 false 修正泡泡外翻)
                 let p0 = pts[drawSides-1]; let p1 = pts[0]; let p2 = pts[1];
                 let a1 = Math.atan2(p0.y - p1.y, p0.x - p1.x); let a2 = Math.atan2(p2.y - p1.y, p2.x - p1.x);
-                ctx.beginPath(); ctx.arc(p1.x, p1.y, 20, a2, a1, true); ctx.stroke();
+                ctx.beginPath(); ctx.arc(p1.x, p1.y, 20, a2, a1, false); ctx.stroke();
                 let angToCenter = Math.atan2(cy - p1.y, cx - p1.x);
                 drawMathText('θ', p1.x + 35*Math.cos(angToCenter) - 10, p1.y + 35*Math.sin(angToCenter) + 8, '#ef4444');
-            } else if (subType === 'POLY_INT_SUM') {
-                // 一般/正多邊形內角和：乾淨畫面，不需要畫弧線與 a1...an 標示
+            } else {
+                // 一般多邊形內角和：畫出「所有」內角並標示 a1...an (把方向改成 false 修正泡泡外翻)
+                const subs = ['₁','₂','₃','₄','₅','₆','₇','₈','₉','₁₀','₁₁','₁₂'];
+                for(let i=0; i<drawSides; i++) {
+                    let p0 = pts[(i-1+drawSides)%drawSides]; let p1 = pts[i]; let p2 = pts[(i+1)%drawSides];
+                    let a1 = Math.atan2(p0.y - p1.y, p0.x - p1.x); let a2 = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+                    ctx.beginPath(); ctx.arc(p1.x, p1.y, 20, a2, a1, false); ctx.stroke();
+                    
+                    let angToCenter = Math.atan2(cy - p1.y, cx - p1.x);
+                    let subStr = subs[i];
+                    if (i === drawSides - 1 && sides > 12) subStr = 'ₙ'; // 超過12邊形的最後一個角標示為 an
+                    else if (i === drawSides - 1) subStr = subs[sides-1]; 
+                    
+                    drawMathText(`a${subStr}`, p1.x + 35*Math.cos(angToCenter) - 10, p1.y + 35*Math.sin(angToCenter) + 8);
+                }
             }
-            
             ctx.fillStyle = '#000'; ctx.font = 'bold 16px "Times New Roman", Times, serif';
-            ctx.fillText(sides > 12 ? `正 ${sides} 邊形示意圖` : `正 ${sides} 邊形`, 10, h - 10);
+            ctx.fillText(sides > 12 ? `${sides} 邊形示意圖` : `${sides} 邊形`, 10, h - 10);
         }
         else if (typeNum === 4) {
             let sides = (subType === 'EXT_SUM') ? ((vals && vals.length > 0) ? vals[0] : 5) : geoData.ans;
@@ -470,9 +483,9 @@
                 ];
             } else {
                 subType = 'POLY_INT_SUM';
-                let n = Math.floor(Math.random()*8)+5; // 5~12 邊形
+                let n = Math.floor(Math.random()*10)+5; // 5~14 邊形
                 values = [n]; ans = (n - 2) * 180;
-                expr = `請問一個 <b>正 ${n} 邊形</b> 的內角和總共是多少度？`;
+                expr = `請問一個 <b>${n} 邊形</b> 的內角和總共是多少度？`;
                 steps = [
                     { prompt: "計算內角和的公式是 (n - ?) × 180°，請問 ? 是多少？", expected: "2", tip: "公式為 (n-2) × 180°" },
                     { prompt: `將邊數 ${n} 代入，(n - 2) 的值是：`, expected: String(n-2), tip: `計算 ${n} - 2` },
@@ -709,7 +722,7 @@
             }
             
             const step2Title = document.getElementById('step2Title');
-            if(step2Title) step2Title.innerText = (session.currentMode === 'REVIEW') ? "👹 魔王幾何重溫挑戰" : "請根據提示與圖形計算角度";
+            if(step2Title) step2Title.innerText = (session.currentMode === 'REVIEW') ? "👹 魔王幾何重溫挑戰" : "請根據提示計算角度";
 
             setTimeout(() => { 
                 document.getElementById('displayGeo').innerHTML = geoData.expr; 
