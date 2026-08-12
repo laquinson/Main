@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中五圓的性質系統 (動態解碼版)</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🪐</text></svg>">
+    <style>
+        :root { --primary: #3b82f6; --primary-hover: #1d4ed8; --success: #10b981; --danger: #ef4444; --warning: #f59e0b; --info: #06b6d4; --stage-bg: #0f172a; --bg: #f8fafc; --teacher-color: #8b5cf6; --card-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2); --glass-bg: rgba(255, 255, 255, 0.12); --glass-border: 1px solid rgba(255, 255, 255, 0.25); --glass-blur: blur(14px); }
+        body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: url("https://i.imgur.com/f118Qxn.jpeg") no-repeat center center fixed; background-size: cover; background-color: #0b1424; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; box-sizing: border-box; }
+        .top-center-account { position: absolute; top: 28px; left: 50%; transform: translateX(-50%); font-size: 20px; font-weight: 900; color: #ffffff; text-shadow: 1px 1px 4px rgba(0,0,0,0.8); z-index: 100; display: none; font-family: 'Comic Sans MS', sans-serif; white-space: nowrap; }
+        .top-nav-btn { background: rgba(255, 255, 255, 0.95); border: 2px solid #cbd5e1; padding: 8px 16px; border-radius: 12px; font-size: 15px; font-weight: bold; color: #475569; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.2s; }
+        .top-nav-btn:hover { transform: scale(1.03); border-color: var(--primary); color: var(--primary); }
+        .logout-btn-text { color: var(--danger); border-color: #fecdd3; } .logout-btn-text:hover { background: #fff1f2; border-color: var(--danger); color: var(--danger); }
+        .top-left-nav { position: absolute; top: 25px; left: 20px; display: none; z-index: 100; } .top-right-nav { position: absolute; top: 25px; right: 20px; display: none; z-index: 100; }
+        .container { max-width: 900px; width: 100%; margin-top: 40px; box-sizing: border-box; }
+        .step-panel { display: none; background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: var(--glass-border); padding: 30px; border-radius: 24px; box-shadow: var(--card-shadow); box-sizing: border-box; margin-bottom: 20px; } .step-panel.active { display: block; }
+        h1, h2, h3, h4 { text-align: center; color: #ffffff; margin-top: 0; font-weight: 800; text-shadow: 1px 1px 4px rgba(0,0,0,0.8); }
+        .form-group { margin-bottom: 24px; width: 100%; box-sizing: border-box; } .form-group:last-of-type { margin-bottom: 32px; }
+        label { display: block; margin-bottom: 12px; font-size: 16px; font-weight: 700; color: #ffffff; text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.9); }
+        input[type="text"], input[type="password"], input[type="number"], select { width: 100%; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.4); border-radius: 8px; font-size: 16px; box-sizing: border-box; background: rgba(255, 255, 255, 0.9); color: #0f172a; font-weight: bold; transition: all 0.15s ease; } input:focus, select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4); }
+        .radio-group { display: flex; flex-direction: column; gap: 10px; background: rgba(255, 255, 255, 0.15); padding: 15px; border-radius: 12px; } .radio-group label { color: #ffffff; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); margin-bottom: 0; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+        button { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 16px; cursor: pointer; font-weight: bold; transition: all 0.2s; box-sizing: border-box; } button:hover { opacity: 0.9; transform: translateY(-1px); }
+        button.btn-success { background: var(--success); } button.btn-warning { background: var(--warning); color: #111; } button.btn-purple { background: var(--teacher-color); } button.btn-secondary { background: #64748b; margin-top: 15px; }
+        .dashboard-wrapper { padding-top: 10px; } .greeting-text { color: #ffffff; text-shadow: 1px 1px 4px rgba(0,0,0,0.8); font-size: 20px; font-weight: 800; text-align: left; margin-left: 5px; margin-bottom: 25px; }
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; box-sizing: border-box; }
+        .dash-btn { border-radius: 20px; padding: 22px; color: white; cursor: pointer; text-align: left; position: relative; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.3); transition: transform 0.2s, box-shadow 0.2s; min-height: 130px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid rgba(255,255,255,0.25); }
+        .dash-btn:hover { transform: translateY(-4px); box-shadow: 0 15px 25px rgba(0,0,0,0.4); } .dash-btn.disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(80%); }
+        .dash-icon { font-size: 36px; font-weight: bold; margin-bottom: 5px; text-shadow: 1px 1px 3px rgba(0,0,0,0.4); } .dash-title { font-size: 20px; font-weight: 800; margin-bottom: 4px; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); } .dash-desc { font-size: 13px; opacity: 0.95; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); }
+        .bg-purple { background: linear-gradient(135deg, #7c3aed, #a855f7); } .bg-orange { background: linear-gradient(135deg, #f59e0b, #fcd34d); color: #0f172a; } .bg-orange .dash-title, .bg-orange .dash-desc { color: #0f172a; text-shadow: none; } .bg-teal { background: linear-gradient(135deg, #0d9488, #2dd4bf); } .bg-blue { background: linear-gradient(135deg, #0284c7, #38bdf8); } 
+        .progress-banner { background: rgba(0, 0, 0, 0.35); padding: 15px 20px; border-radius: 12px; font-weight: bold; display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; box-sizing: border-box; color: white; border: 1px solid rgba(255,255,255,0.15); }
+        .progress-banner-header { display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box; }
+        .progress-bar-container { background: rgba(255,255,255,0.2); width: 100%; height: 10px; border-radius: 10px; overflow: hidden; box-sizing: border-box; } .progress-bar-fill { background: var(--success); width: 0%; height: 100%; transition: width 0.4s ease; }
+        .stage-box { background: var(--stage-bg); border-radius: 16px; padding: 25px; margin: 20px 0; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; font-size: 22px; font-weight: bold; letter-spacing: 1px; line-height: 1.6; border: 1px solid rgba(255,255,255,0.15); }
+        .canvas-container { background: #ffffff; border-radius: 12px; margin-top: 20px; padding: 25px; display: flex; justify-content: center; box-shadow: 0 8px 15px rgba(0,0,0,0.4); border: 3px solid #cbd5e1; }
+        canvas { max-width: 100%; height: auto; }
+        .feedback { padding: 15px; border-radius: 8px; margin: 20px 0; font-weight: bold; border-left: 6px solid #cbd5e1; } .feedback.error { background: #fce8e6; color: var(--danger); border-left-color: var(--danger); } .feedback.warning { background: #fffbeb; color: #b45309; border-left-color: var(--warning); } .feedback.success { background: #e6f4ea; color: var(--success); border-left-color: var(--success); }
+        .teaching-row { display: flex; gap: 20px; margin-top: 25px; flex-direction: column; width: 100%; box-sizing: border-box; } @media(min-width: 768px) { .teaching-row { flex-direction: row; } }
+        .teaching-column { flex: 1; background: var(--glass-bg); border: var(--glass-border); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); padding: 20px; border-radius: 14px; box-sizing: border-box; color: white; } .teaching-column h3 { text-align: left; margin-top:0; }
+        .math-step-box { font-family: monospace; background: #1e293b; color: #00ff00; padding: 15px; border-radius: 8px; font-size: 16px; line-height: 2.2; border: 1px solid rgba(255,255,255,0.15); }
+        .math-step-box .step-line { margin-bottom: 10px; display: block; padding: 4px 8px; border-radius:4px; } .math-step-box .active-line { background: #334155; color: #fffb00; font-weight: bold; border-left: 4px solid var(--warning); }
+        .camp-tip { font-size: 14px; color: #f1f5f9; background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; border-left: 4px solid var(--primary); margin-bottom: 10px; line-height:1.5; }
+        .timer-badge { background: var(--danger); color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; display: none; }
+        table.stats-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; background: rgba(255,255,255,0.95); border-radius: 12px; overflow: hidden; color: #0f172a; } table.stats-table th, table.stats-table td { border: 1px solid #cbd5e1; padding: 10px; text-align: center; } table.stats-table th { background: #e2e8f0; color: #1e293b; font-weight: bold; } table.stats-table tr.section-title th { background: #2b5797; color: white; text-align: left; padding-left: 15px; }
+        @media (max-width: 768px) { .dashboard-grid { grid-template-columns: 1fr; } }
+        @media print { .non-print, button, .top-right-nav, .top-left-nav { display: none !important; } .step-panel { display: none !important; } #step_stats_panel { display: block !important; } }
+    </style>
+</head>
+<body>
+
+<div id="loadingOverlay" class="loading-overlay" style="display: none;"><div class="spinner"></div><p id="loadingText" style="margin-top:15px;font-weight:bold;">連線中...</p></div>
+<div id="topLeftNav" class="top-left-nav"><button id="dynamicNavBtn" class="top-nav-btn" onclick="handleTopLeftNav()">&lt; 返回學習大廳</button></div>
+<div id="topCenterAccount" class="top-center-account"></div>
+<div id="topRightNav" class="top-right-nav"><button class="top-nav-btn logout-btn-text" onclick="logoutSession()" title="登出">🚪 登出</button></div>
+
+<div class="container" id="mainContainer" style="display: none;">
+    <!-- 模組主選單 -->
+    <div id="step1" class="step-panel dashboard-wrapper">
+        <div class="greeting-text">請選擇「圓的性質」挑戰模式</div>
+        <div class="dashboard-grid">
+            <div class="dash-btn bg-purple id-student-only" onclick="switchSetupConfig('CHALLENGE')">
+                <div><div class="dash-icon">🎯</div><div class="dash-title">圓之解碼者 (綜合)</div></div>
+                <div class="dash-desc">挑戰各種圓形定理，解開古老密碼</div>
+            </div>
+            <div class="dash-btn bg-orange" onclick="switchSetupConfig('STATS')">
+                <div><div class="dash-icon">🏆</div><div class="dash-title">即時記錄</div></div>
+                <div class="dash-desc">查看全班與個人的解碼數據報告</div>
+            </div>
+            <div class="dash-btn bg-teal id-student-only" onclick="switchSetupConfig('CYCLIC_TRAINING')">
+                <div><div class="dash-icon">🔳</div><div class="dash-title">圓內接四邊形特訓</div></div>
+                <div class="dash-desc">專注訓練圓內接四邊形的內對角與外角</div>
+            </div>
+            <div id="reviewModeCard" class="dash-btn bg-blue id-student-only disabled" onclick="switchSetupConfig('REVIEW')">
+                <div><div class="dash-icon">🗂️</div><div class="dash-title" id="reviewTitle">錯題庫 (0 題)</div></div>
+                <div class="dash-desc">重溫歷程未攻破的魔王圓形題</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 闖關模式設定 -->
+    <div id="step1_challenge" class="step-panel">
+        <h2>🎮 圓之解碼者 闖關設定</h2>
+        <div class="form-group">
+            <label for="typeSelect">🧭 選擇圓形題型：</label>
+            <select id="typeSelect" title="選擇題型">
+                <option value="1">1. 圓心角與圓周角</option>
+                <option value="2">2. 同弓形內的圓周角</option>
+                <option value="3">3. 半圓上的圓周角</option>
+                <option value="4">4. 圓內接四邊形</option>
+                <option value="MIX" selected>5. 🔀 綜合圓形定理大亂鬥</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>終點條件：</label>
+            <div class="radio-group">
+                <label><input type="radio" name="endCondition" value="COUNT" checked onchange="toggleConditionUI()"> 🔢 固定題數模式</label>
+                <label><input type="radio" name="endCondition" value="TARGET_SCORE" onchange="toggleConditionUI()"> 🏆 指定分數達標模式</label>
+                <label><input type="radio" name="endCondition" value="TIME_LIMIT" onchange="toggleConditionUI()"> ⏳ 限時瘋狂衝分模式</label>
+            </div>
+        </div>
+        <div class="form-group" id="countInputWrapper">
+            <label for="totalQuestionsInput">🔢 挑戰題數：</label>
+            <input type="number" id="totalQuestionsInput" value="5" min="1" max="25" title="挑戰題數">
+        </div>
+        <div class="form-group" id="targetScoreInputWrapper" style="display: none;">
+            <label for="targetScoreInput">🏆 目標達標分數：</label>
+            <input type="number" id="targetScoreInput" value="5" min="1" title="目標分數" placeholder="分數">
+        </div>
+        <div class="form-group" id="timeLimitInputWrapper" style="display: none;">
+            <label for="timeLimitSelect">⏱️ 限制時間選擇：</label>
+            <select id="timeLimitSelect" title="限制時間">
+                <option value="180">3 分鐘衝刺賽</option>
+                <option value="300" selected>5 分鐘標準賽</option>
+            </select>
+        </div>
+        <button onclick="initChallengeSession()" class="btn-success">🎲 生成關卡，出發！</button>
+    </div>
+
+    <!-- 作答舞台 -->
+    <div id="step2" class="step-panel">
+        <div class="progress-banner">
+            <div class="progress-banner-header">
+                <span id="progressText">進度...</span>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <span id="globalTimerBox" class="timer-badge">⏱️ 00:00</span>
+                    <span id="scoreText" style="background:var(--stage-bg);color:#fffb00;padding:4px 8px;border-radius:20px;">積分：0</span>
+                </div>
+            </div>
+            <div class="progress-bar-container"><div id="progressBarFill" class="progress-bar-fill"></div></div>
+        </div>
+        <h2 id="step2Title">請根據提示與圖形計算角度</h2>
+        
+        <div class="stage-box" id="displayGeoContainer">
+            <div id="displayGeo" style="margin-bottom: 5px;">題目載入中...</div>
+            <!-- 動態 Canvas 繪圖區 -->
+            <div class="canvas-container">
+                <canvas id="circleCanvas" width="400" height="400"></canvas>
+            </div>
+        </div>
+        
+        <div id="studentAnswerFormContainer">
+            <div class="form-group" id="primaryInputWrapper">
+                <label for="ansInput">請輸入未知的角度大小（不需要輸入度數符號）：</label>
+                <input type="number" id="ansInput" placeholder="例如: 65 或 120" autocomplete="off">
+            </div>
+            <div id="retryInputWrapper" style="display:none; margin-top: 15px; padding-top: 15px; border-top: 2px dashed #cbd5e1;">
+                <label for="ansRetryInput" style="color:var(--warning)"><b>✍️ 請在下方重新計算並填寫修正後的角度：</b></label>
+                <input type="number" id="ansRetryInput" placeholder="在此處輸入修正後的數值" autocomplete="off">
+            </div>
+        </div>
+        <div id="initialFeedbackArea"></div>
+        <div style="margin-top: 20px;">
+            <button id="submitAnsBtn" onclick="checkFirstAnswer()">提交結果並驗證答案</button>
+        </div>
+    </div>
+
+    <!-- 教學推導黑板 -->
+    <div id="step3" class="step-panel">
+        <div class="progress-banner">
+            <div class="progress-banner-header">
+                <span id="progressTextStage3">進度...</span>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <span id="globalTimerBoxStage3" class="timer-badge">⏱️ 00:00</span>
+                    <span id="teachingHeaderBadge" style="color:var(--danger);font-weight:bold;margin-right: 5px;">💡 圓形定理破譯黑板</span>
+                </div>
+            </div>
+            <div class="progress-bar-container"><div id="progressBarFillStage3" class="progress-bar-fill"></div></div>
+        </div>
+        <h2 id="step3HeadingTitle">圓形定理推導</h2>
+        <div class="stage-box" id="interactiveStageBox" style="font-size: 22px; padding: 20px;">展示台</div>
+        <div id="feedbackArea" class="feedback"></div>
+        <button id="solveBtn" class="btn-warning" onclick="startInteractiveSolving()">🔮 啟動定理引導教學黑板</button>
+
+        <div id="teachingZone" class="teaching-row" style="display: none;">
+            <div class="teaching-column">
+                <h3>🛠️ 逐步引導驗證</h3>
+                <div id="dynamicStepArea" style="display:block;">
+                    <div class="block-form">
+                        <div class="camp-tip" id="stepTip">載入中...</div>
+                        <label id="stepLabel" for="stepInput"></label>
+                        <input type="number" id="stepInput" placeholder="請輸入本步驟的數值" autocomplete="off">
+                        <button onclick="executeCurrentStep()" class="btn-success" style="margin-top:10px;">驗證此步驟</button>
+                        <div id="teachingWrongArea"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="teaching-column">
+                <h3>📝 步驟動態黑板</h3>
+                <div class="math-step-box" id="mathStepBox"></div>
+            </div>
+        </div>
+        <button id="nextBtn" class="btn-success" onclick="advanceQuestion()" style="display:none;margin-top:20px;">前進下一題 ➡️</button>
+    </div>
+
+    <!-- 學習報告面板 -->
+    <div id="step_stats_panel" class="step-panel">
+        <h2 id="reportMainHeading">📊 學生圓形性質學習報告</h2>
+        
+        <div id="teacherQueryZone" class="non-print" style="background: rgba(243, 232, 255, 0.8); padding: 15px; border-radius: 16px; border: 2px dashed #8b5cf6; margin-bottom: 20px; display: none;">
+            <p style="margin: 0 0 10px 0; font-weight: bold; color: #6b21a8; font-size: 15px;">🔍 教師跨系統權限調閱模組</p>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                <select id="queryClass" style="width: 130px; padding: 8px; font-size: 15px;"></select>
+                <select id="querySeat" style="width: 100px; padding: 8px; font-size: 15px;"></select>
+                <button onclick="loadTargetStudentDataByTeacher()" class="btn-purple" style="width: auto; padding: 8px 16px; margin: 0;">提取個案</button>
+            </div>
+        </div>
+
+        <div id="printOutputRenderZone">
+            <div class="print-student-page">
+                <div style="background: rgba(0,0,0,0.4); padding: 15px; border-radius: 12px; margin-bottom: 15px;" class="non-print">
+                    <h3 id="printStudentInfo" style="margin:0; color:#fffb00; font-size: 18px;">學生班別：加載中...</h3>
+                    <p id="printDate" style="margin: 5px 0 0 0; font-size: 13px; color: #cbd5e1;">產出日期：-</p>
+                </div>
+                
+                <table class="stats-table">
+                    <thead>
+                        <tr>
+                            <th>題型定理分類</th>
+                            <th>挑戰次數</th>
+                            <th>首答對 (必殺)</th>
+                            <th>補答對 (挽回)</th>
+                            <th>失敗 / 破譯</th>
+                            <th>首發率</th>
+                            <th>綜合率</th>
+                        </tr>
+                    </thead>
+                    <tbody id="statsTableBody"></tbody>
+                </table>
+                <h4 style="color: #fca5a5; margin-top: 20px; font-size: 16px; font-weight: bold;">📘 目前未消滅錯題本數量 (計 <span id="statsWrongCount">0</span> 題)</h4>
+            </div>
+        </div>
+        <div class="btn-group non-print" style="display:flex;gap:15px;margin-top:20px;">
+            <button onclick="window.print()" class="btn-info">🖨️ 匯出 PDF 學習報告檔案</button>
+            <button class="btn-secondary" onclick="resetToMainMenu(false)" style="margin-top:0;">↩️ 返回主目錄</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwIK7Mqd4WEDpbuZR-PDt4pq-8EkZ74POUDDe9WgxZA_5QqPvIBdGdD2jVFjsVOZRIj/exec";
+
+    let currentRole = "STUDENT", userRawClass = "", userRawSeat = "";
+    let currentPanelId = "step1"; 
+    
+    let cacheStorage = {
+        CIRCLE: { 
+            wrongBook: [], 
+            stats: {
+                1: { name: "圓心角與圓周角", total: 0, firstMatch: 0, retryMatch: 0, failed: 0 },
+                2: { name: "同弓形內的圓周角", total: 0, firstMatch: 0, retryMatch: 0, failed: 0 },
+                3: { name: "半圓上的圓周角", total: 0, firstMatch: 0, retryMatch: 0, failed: 0 },
+                4: { name: "圓內接四邊形", total: 0, firstMatch: 0, retryMatch: 0, failed: 0 }
+            } 
+        }
+    };
+
+    let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, targetScore: 5, timeLimitSetting: 300, score: 0, currentIdx: 0, questionList: [], selectedType: 'MIX', currentTypeNum: 1, wrongAttemptsThisQuestion: 0, wrongAttemptsInTeaching: 0 };
+    let circleData = { typeNum: 1, subType: "", title: "", expr: "", ans: 0, values: [], steps: [] };
+    let currentTeachStep = 0;
+    let timerInterval = null; let timeLeft = 0;
+    let wrongQuestionBank = [];
+
+    // === 動態圓形幾何繪圖引擎 (Circular Geometry Canvas Renderer) ===
+    function drawCircleGeometry(canvasId = 'circleCanvas') {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        canvas.style.backgroundColor = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#000000';
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        
+        const w = canvas.width;
+        const h = canvas.height;
+        const cx = w / 2;
+        const cy = h / 2;
+        const r = 140; // 圓的半徑
+
+        let typeNum = circleData.typeNum;
+        let subType = circleData.subType;
+        let vals = circleData.values;
+
+        // 畫主圓
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+        ctx.stroke();
+
+        // 中心點 O
+        ctx.beginPath();
+        ctx.arc(cx, cy, 3, 0, 2 * Math.PI);
+        ctx.fill();
+        drawMathText('O', cx - 15, cy + 20);
+
+        function drawMathText(txt, x, y, color='#000') { ctx.fillStyle = color; ctx.font = 'italic 20px "Times New Roman", Times, serif'; ctx.fillText(txt, x, y); }
+        function drawValueText(txt, x, y, color='#000') { ctx.fillStyle = color; ctx.font = 'bold 16px "Times New Roman", Times, serif'; ctx.fillText(txt, x, y); }
+        function drawAngleArc(x, y, s, e, rad=25) { ctx.beginPath(); ctx.arc(x, y, rad, s, e); ctx.stroke(); }
+        
+        // 將極座標轉換為畫布座標
+        function getPt(angleDeg) {
+            let rad = (angleDeg - 90) * Math.PI / 180; // 調整 -90 度讓 0 度在正上方
+            return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+        }
+
+        if(typeNum === 1) { // 圓心角與圓周角
+            let angA = 220; let angB = 140; let angP = 0;
+            let ptA = getPt(angA); let ptB = getPt(angB); let ptP = getPt(angP);
+
+            ctx.beginPath(); ctx.moveTo(ptA.x, ptA.y); ctx.lineTo(cx, cy); ctx.lineTo(ptB.x, ptB.y); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(ptA.x, ptA.y); ctx.lineTo(ptP.x, ptP.y); ctx.lineTo(ptB.x, ptB.y); ctx.stroke();
+
+            drawMathText('A', ptA.x - 20, ptA.y + 10);
+            drawMathText('B', ptB.x + 10, ptB.y + 10);
+            drawMathText('P', ptP.x - 5, ptP.y - 15);
+
+            // 畫弧與標示
+            let a1 = Math.atan2(ptA.y - ptP.y, ptA.x - ptP.x);
+            let a2 = Math.atan2(ptB.y - ptP.y, ptB.x - ptP.x);
+            drawAngleArc(ptP.x, ptP.y, a2, a1, 30);
+
+            let a3 = Math.atan2(ptA.y - cy, ptA.x - cx);
+            let a4 = Math.atan2(ptB.y - cy, ptB.x - cx);
+            drawAngleArc(cx, cy, a4, a3, 20);
+
+            if(subType === 'FIND_CENTER') {
+                drawValueText(`${vals[0]}°`, ptP.x - 10, ptP.y + 45);
+                drawValueText('θ', cx - 5, cy - 25, '#ef4444');
+            } else {
+                drawValueText(`${vals[0]}°`, cx - 12, cy - 25);
+                drawValueText('θ', ptP.x - 5, ptP.y + 45, '#ef4444');
+            }
+        }
+        else if (typeNum === 2) { // 同弓形內的圓周角
+            let ptA = getPt(230); let ptB = getPt(130);
+            let ptP = getPt(320); let ptQ = getPt(40);
+
+            ctx.beginPath(); ctx.moveTo(ptA.x, ptA.y); ctx.lineTo(ptB.x, ptB.y); ctx.stroke(); // 弦 AB
+            ctx.beginPath(); ctx.moveTo(ptA.x, ptA.y); ctx.lineTo(ptP.x, ptP.y); ctx.lineTo(ptB.x, ptB.y); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(ptA.x, ptA.y); ctx.lineTo(ptQ.x, ptQ.y); ctx.lineTo(ptB.x, ptB.y); ctx.stroke();
+
+            drawMathText('A', ptA.x - 20, ptA.y + 10); drawMathText('B', ptB.x + 10, ptB.y + 10);
+            drawMathText('P', ptP.x - 20, ptP.y - 10); drawMathText('Q', ptQ.x + 10, ptQ.y - 10);
+
+            let a1 = Math.atan2(ptA.y - ptP.y, ptA.x - ptP.x); let a2 = Math.atan2(ptB.y - ptP.y, ptB.x - ptP.x);
+            drawAngleArc(ptP.x, ptP.y, a2, a1, 30);
+            let a3 = Math.atan2(ptA.y - ptQ.y, ptA.x - ptQ.x); let a4 = Math.atan2(ptB.y - ptQ.y, ptB.x - ptQ.x);
+            drawAngleArc(ptQ.x, ptQ.y, a4, a3, 30);
+
+            drawValueText(`${vals[0]}°`, ptP.x + 15, ptP.y + 35);
+            drawValueText('θ', ptQ.x - 30, ptQ.y + 35, '#ef4444');
+        }
+        else if (typeNum === 3) { // 半圓上的圓周角
+            let ptA = getPt(270); let ptB = getPt(90); // AB 是水平直徑
+            let ptP = getPt(10); // P 點在上方
+
+            ctx.beginPath(); ctx.moveTo(ptA.x, ptA.y); ctx.lineTo(ptB.x, ptB.y); ctx.stroke(); // 直徑
+            ctx.beginPath(); ctx.moveTo(ptA.x, ptA.y); ctx.lineTo(ptP.x, ptP.y); ctx.lineTo(ptB.x, ptB.y); ctx.stroke();
+
+            drawMathText('A', ptA.x - 20, ptA.y + 5); drawMathText('B', ptB.x + 10, ptB.y + 5);
+            drawMathText('P', ptP.x, ptP.y - 10);
+
+            // 畫直角符號
+            let a1 = Math.atan2(ptA.y - ptP.y, ptA.x - ptP.x);
+            let a2 = Math.atan2(ptB.y - ptP.y, ptB.x - ptP.x);
+            drawAngleArc(ptP.x, ptP.y, a2, a1, 20); // 這裡簡化畫弧線代表直角
+
+            // PAB 角度
+            let a3 = Math.atan2(ptP.y - ptA.y, ptP.x - ptA.x);
+            let a4 = Math.atan2(ptB.y - ptA.y, ptB.x - ptA.x);
+            drawAngleArc(ptA.x, ptA.y, a3, a4, 35);
+
+            // PBA 角度
+            let a5 = Math.atan2(ptA.y - ptB.y, ptA.x - ptB.x);
+            let a6 = Math.atan2(ptP.y - ptB.y, ptP.x - ptB.x);
+            drawAngleArc(ptB.x, ptB.y, a6, a5, 35);
+
+            if(subType === 'FIND_A') {
+                drawValueText(`${vals[0]}°`, ptB.x - 45, ptB.y - 10);
+                drawValueText('θ', ptA.x + 30, ptA.y - 10, '#ef4444');
+            } else {
+                drawValueText(`${vals[0]}°`, ptA.x + 30, ptA.y - 10);
+                drawValueText('θ', ptB.x - 30, ptB.y - 10, '#ef4444');
+            }
+        }
+        else if (typeNum === 4) { // 圓內接四邊形
+            let ptA = getPt(220); let ptB = getPt(320); let ptC = getPt(60); let ptD = getPt(140);
+            
+            ctx.beginPath(); ctx.moveTo(ptA.x, ptA.y); ctx.lineTo(ptB.x, ptB.y); ctx.lineTo(ptC.x, ptC.y); ctx.lineTo(ptD.x, ptD.y); ctx.closePath(); ctx.stroke();
+            
+            drawMathText('A', ptA.x - 20, ptA.y - 10); drawMathText('B', ptB.x - 10, ptB.y - 15);
+            drawMathText('C', ptC.x + 10, ptC.y + 10); drawMathText('D', ptD.x - 10, ptD.y + 20);
+
+            if(subType === 'OPPOSITE') {
+                // 畫對角
+                let a1 = Math.atan2(ptD.y - ptA.y, ptD.x - ptA.x); let a2 = Math.atan2(ptB.y - ptA.y, ptB.x - ptA.x);
+                drawAngleArc(ptA.x, ptA.y, a2, a1, 25);
+                let a3 = Math.atan2(ptB.y - ptC.y, ptB.x - ptC.x); let a4 = Math.atan2(ptD.y - ptC.y, ptD.x - ptC.x);
+                drawAngleArc(ptC.x, ptC.y, a4, a3, 25);
+
+                drawValueText(`${vals[0]}°`, ptA.x + 15, ptA.y + 15);
+                drawValueText('θ', ptC.x - 25, ptC.y - 10, '#ef4444');
+            } else {
+                // 外角與內對角
+                // 延長 DC 形成外角
+                let dx = ptC.x - ptD.x; let dy = ptC.y - ptD.y;
+                let len = Math.sqrt(dx*dx + dy*dy);
+                let ex = ptC.x + (dx/len)*40; let ey = ptC.y + (dy/len)*40;
+                ctx.beginPath(); ctx.moveTo(ptC.x, ptC.y); ctx.lineTo(ex, ey); ctx.stroke();
+                drawMathText('E', ex + 10, ey + 10);
+
+                let a1 = Math.atan2(ptD.y - ptA.y, ptD.x - ptA.x); let a2 = Math.atan2(ptB.y - ptA.y, ptB.x - ptA.x);
+                drawAngleArc(ptA.x, ptA.y, a2, a1, 25);
+
+                let a3 = Math.atan2(ey - ptC.y, ex - ptC.x); let a4 = Math.atan2(ptB.y - ptC.y, ptB.x - ptC.x);
+                drawAngleArc(ptC.x, ptC.y, a3, a4, 20);
+
+                if (subType === 'FIND_EXT') {
+                    drawValueText(`${vals[0]}°`, ptA.x + 15, ptA.y + 15);
+                    drawValueText('θ', ptC.x + 15, ptC.y - 15, '#ef4444');
+                } else {
+                    drawValueText(`${vals[0]}°`, ptC.x + 15, ptC.y - 15);
+                    drawValueText('θ', ptA.x + 15, ptA.y + 15, '#ef4444');
+                }
+            }
+        }
+    }
+
+    // === Circle Engine 題庫生成引擎 ===
+    function generateGeometryQuestion(mode) {
+        let typeNum = (mode === 'MIX') ? Math.floor(Math.random() * 4) + 1 : parseInt(mode);
+        let expr = "", ans = 0, steps = [], subType = "", values = [];
+
+        if (typeNum === 1) { // 圓心角與圓周角
+            let findCenter = Math.random() > 0.5;
+            if (findCenter) {
+                subType = 'FIND_CENTER';
+                let p = Math.floor(Math.random()*40)+30; // 圓周角 30~69
+                ans = p * 2; values = [p];
+                expr = `圖中，O是圓心。<br>已知圓周角 ∠<i>APB</i> = ${p}°，請問圓心角 θ 是多少度？`;
+                steps = [
+                    { prompt: "根據定理，圓心角是同弧圓周角的幾倍？", expected: "2", tip: "圓心角兩倍於圓周角" },
+                    { prompt: "因此 θ 等於多少度？", expected: String(ans), tip: `計算 ${p} × 2` }
+                ];
+            } else {
+                subType = 'FIND_PERI';
+                let c = (Math.floor(Math.random()*40)+30) * 2; // 圓心角 60~138 (偶數)
+                ans = c / 2; values = [c];
+                expr = `圖中，O是圓心。<br>已知圓心角 ∠<i>AOB</i> = ${c}°，請問圓周角 θ 是多少度？`;
+                steps = [
+                    { prompt: "根據定理，圓周角是同弧圓心角的幾分之幾？(請輸入小數)", expected: "0.5", tip: "圓心角兩倍於圓周角，反過來就是一半" },
+                    { prompt: "因此 θ 等於多少度？", expected: String(ans), tip: `計算 ${c} ÷ 2` }
+                ];
+            }
+            return JSON.stringify({ typeNum, subType, values, title: "圓心角與圓周角", expr, ans, steps });
+        } 
+        else if (typeNum === 2) { // 同弓形內的圓周角
+            subType = 'SAME_SEG';
+            let p = Math.floor(Math.random()*50)+25; // 25~74
+            ans = p; values = [p];
+            expr = `圖中，∠<i>APB</i> 和 ∠<i>AQB</i> 是同一個弓形內的圓周角。<br>已知 ∠<i>APB</i> = ${p}°，請問 θ 是多少度？`;
+            steps = [
+                { prompt: "在同一個弓形內的圓周角，它們的大小關係是？(請輸入: 相等/不相等)", expected: "相等", tip: "同弓形內的圓周角" },
+                { prompt: "因此 θ 等於多少度？", expected: String(ans), tip: `直接寫出答案` }
+            ];
+            return JSON.stringify({ typeNum, subType, values, title: "同弓形內的圓周角", expr, ans, steps });
+        }
+        else if (typeNum === 3) { // 半圓上的圓周角
+            let findA = Math.random() > 0.5;
+            let knownAng = Math.floor(Math.random()*40)+25; // 25~64
+            ans = 90 - knownAng; 
+            
+            if (findA) {
+                subType = 'FIND_A'; values = [knownAng];
+                expr = `圖中，<i>AB</i> 是圓的直徑。<br>已知 ∠<i>PBA</i> = ${knownAng}°，請問 θ 是多少度？`;
+            } else {
+                subType = 'FIND_B'; values = [knownAng];
+                expr = `圖中，<i>AB</i> 是圓的直徑。<br>已知 ∠<i>PAB</i> = ${knownAng}°，請問 θ 是多少度？`;
+            }
+            steps = [
+                { prompt: "半圓上的圓周角 (∠APB) 是多少度？", expected: "90", tip: "直徑所對的圓周角是直角" },
+                { prompt: "三角形內角和是多少度？", expected: "180", tip: "△內角和" },
+                { prompt: "因此 θ 等於多少度？", expected: String(ans), tip: `計算 180 - 90 - ${knownAng}` }
+            ];
+            return JSON.stringify({ typeNum, subType, values, title: "半圓上的圓周角", expr, ans, steps });
+        }
+        else { // 圓內接四邊形
+            let isOpposite = Math.random() > 0.5;
+            if (isOpposite) {
+                subType = 'OPPOSITE';
+                let a = Math.floor(Math.random()*60)+60; // 60~119
+                ans = 180 - a; values = [a];
+                expr = `圖中，<i>ABCD</i> 是一個圓內接四邊形。<br>已知 ∠<i>DAB</i> = ${a}°，請問對角 θ 是多少度？`;
+                steps = [
+                    { prompt: "圓內接四邊形的「對角之和」是多少度？", expected: "180", tip: "圓內接四邊形對角" },
+                    { prompt: "因此 θ 等於多少度？", expected: String(ans), tip: `計算 180 - ${a}` }
+                ];
+            } else {
+                let findExt = Math.random() > 0.5;
+                let ang = Math.floor(Math.random()*60)+60;
+                ans = ang; values = [ang];
+                if(findExt) {
+                    subType = 'FIND_EXT';
+                    expr = `圖中，<i>ABCD</i> 是一個圓內接四邊形，<i>DCE</i> 為直線。<br>已知內對角 ∠<i>DAB</i> = ${ang}°，請問外角 θ 是多少度？`;
+                } else {
+                    subType = 'FIND_INT';
+                    expr = `圖中，<i>ABCD</i> 是一個圓內接四邊形，<i>DCE</i> 為直線。<br>已知外角 ∠<i>BCE</i> = ${ang}°，請問內對角 θ 是多少度？`;
+                }
+                steps = [
+                    { prompt: "圓內接四邊形的外角與其「內對角」的大小關係是？(請輸入: 相等/不相等)", expected: "相等", tip: "圓內接四邊形外角" },
+                    { prompt: "因此 θ 等於多少度？", expected: String(ans), tip: `直接寫出答案` }
+                ];
+            }
+            return JSON.stringify({ typeNum, subType, values, title: "圓內接四邊形", expr, ans, steps });
+        }
+    }
+    // ========================
+
+    document.addEventListener('DOMContentLoaded', function() {
+        let savedRole = localStorage.getItem("Active_User_Role"); if (!savedRole) { window.location.replace("index.html"); return; }
+        currentRole = savedRole; userRawClass = localStorage.getItem("Active_User_Class") || "GUEST"; userRawSeat = localStorage.getItem("Active_User_Seat") || "VISITOR";
+
+        let badge = document.getElementById('topCenterAccount');
+        if (badge) {
+            badge.style.display = "block";
+            if (currentRole === "STUDENT") {
+                badge.innerText = `挑戰者: ${userRawClass}班${String(userRawSeat).padStart(2, '0')}號`;
+                initLocalFallback(userRawClass, userRawSeat);
+                setupLayoutForStudent();
+            } else if (currentRole === "GUEST") {
+                badge.innerText = `挑戰者: 訪客體驗`;
+                setupLayoutForStudent();
+            } else if (currentRole === "TEACHER") {
+                let teacherId = localStorage.getItem("Active_User_TeacherID") || "Teacher_01";
+                badge.innerText = `管理員: ${teacherId.replace('Teacher_','')}`;
+                let qZone = document.getElementById('teacherQueryZone');
+                if(qZone) qZone.style.display = "block";
+                buildTeacherQueryOptions();
+                document.querySelectorAll('.id-student-only').forEach(el => el.style.display = "none");
+            }
+        }
+        updateReviewMenuUI(); showPanel('step1');
+    });
+
+    async function initLocalFallback(tC, tS) {
+        let cacheKey = `CircleCache_${tC}-${tS}`;
+        try {
+            let local = localStorage.getItem(cacheKey);
+            if(local) {
+                let p = JSON.parse(local);
+                if(p.CIRCLE && p.CIRCLE.stats && p.CIRCLE.stats[1]) { cacheStorage = p; wrongQuestionBank = cacheStorage.CIRCLE.wrongBook || []; }
+            }
+        } catch(e) {}
+        
+        try {
+            let res = await fetch(`${GAS_API_URL}?type=GET_CACHE&cacheKey=${cacheKey}&t=${new Date().getTime()}`);
+            if(res.ok) {
+                let data = await res.json();
+                if(data && data.cacheData) {
+                    let parsedData = JSON.parse(data.cacheData);
+                    if(parsedData.CIRCLE && parsedData.CIRCLE.stats && parsedData.CIRCLE.stats[1]) {
+                        cacheStorage = parsedData; localStorage.setItem(cacheKey, data.cacheData); wrongQuestionBank = cacheStorage.CIRCLE.wrongBook || [];
+                    }
+                }
+            }
+        } catch(e) {}
+        updateReviewMenuUI();
+    }
+
+    function cloudSaveData() {
+        if (["GUEST", "TEACHER"].includes(currentRole) || !userRawClass || !userRawSeat) return;
+        try {
+            let cacheKey = `CircleCache_${userRawClass}-${userRawSeat}`;
+            let cacheStr = JSON.stringify(cacheStorage);
+            localStorage.setItem(cacheKey, cacheStr);
+            
+            let params = new URLSearchParams(); params.append('type', 'SAVE_CACHE'); params.append('cacheKey', cacheKey); params.append('cacheData', cacheStr);
+            fetch(GAS_API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params.toString() }).catch(e=>{});
+        } catch(e){}
+    }
+
+    function setupLayoutForStudent() { document.querySelectorAll('.id-student-only').forEach(el => el.style.display = "flex"); updateReviewMenuUI(); }
+    
+    function buildTeacherQueryOptions() {
+        const qC = document.getElementById('queryClass'); const qS = document.getElementById('querySeat');
+        if(!qC || !qS) return; qC.innerHTML = ""; qS.innerHTML = "";
+        for(let g=1; g<=6; g++) ['A','B','C','D'].forEach(l => qC.innerHTML+=`<option value="${g}${l}">${g}${l}班</option>`);
+        for(let i=1; i<=35; i++) qS.innerHTML+=`<option value="${i}">${i}號</option>`;
+    }
+
+    function showPanel(id) {
+        document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+        const targetPanel = document.getElementById(id);
+        if (targetPanel) {
+            targetPanel.classList.add('active');
+            document.getElementById('mainContainer').style.display = 'block';
+            currentPanelId = id;
+            
+            let navLeft = document.getElementById('topLeftNav');
+            if (navLeft) { navLeft.style.display = 'block'; document.getElementById('dynamicNavBtn').innerText = (id === 'step1') ? "< 返回學習大廳" : "< 返回主目錄"; }
+            let navRight = document.getElementById('topRightNav');
+            if (navRight) navRight.style.display = 'block';
+        }
+    }
+
+    function handleTopLeftNav() {
+        if (currentPanelId === 'step1') { stopSessionTimer(); window.location.replace("home.html"); }
+        else { resetToMainMenu(true); }
+    }
+
+    function toggleConditionUI() {
+        try {
+            let selectedEl = document.querySelector('input[name="endCondition"]:checked');
+            if(!selectedEl) return;
+            let c = selectedEl.value;
+            document.getElementById('countInputWrapper').style.display = c === 'COUNT' ? 'block' : 'none';
+            document.getElementById('targetScoreInputWrapper').style.display = c === 'TARGET_SCORE' ? 'block' : 'none';
+            document.getElementById('timeLimitInputWrapper').style.display = c === 'TIME_LIMIT' ? 'block' : 'none';
+        } catch(e) {}
+    }
+
+    function switchSetupConfig(configMode) {
+        try {
+            session.currentMode = configMode;
+            if (configMode === 'CHALLENGE') { showPanel('step1_challenge'); toggleConditionUI(); }
+            else if (configMode === 'CYCLIC_TRAINING') {
+                document.getElementById('typeSelect').value = "4"; // 設定為圓內接四邊形
+                showPanel('step1_challenge'); toggleConditionUI();
+            }
+            else if (configMode === 'MAIN') { showPanel('step1'); }
+            else if (configMode === 'STATS') { calculateAndRenderStats(); showPanel('step_stats_panel'); }
+            else if (configMode === 'REVIEW') {
+                if (wrongQuestionBank.length === 0) { alert("🎉 目前沒有任何錯題記錄！"); return; }
+                stopSessionTimer(); session.score = 0; session.currentIdx = 0; session.questionList = [...wrongQuestionBank];
+                session.endCondition = 'COUNT'; session.totalQuestions = session.questionList.length;
+                loadQuestionToStage();
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    function pushTeacherRecord(mod) {
+        if(currentRole !== 'STUDENT') return;
+        try {
+            let record = { class: userRawClass, seat: userRawSeat, module: mod, score: session.score, timestamp: new Date().toLocaleString("zh-HK", {hour12:false}) };
+            let r = JSON.parse(localStorage.getItem('MathSystem_Student_Records') || '[]');
+            r.unshift(record); if(r.length>200) r.pop(); localStorage.setItem('MathSystem_Student_Records', JSON.stringify(r));
+
+            let params = new URLSearchParams(); params.append('type', 'RECORD'); params.append('class', record.class); params.append('seat', record.seat); params.append('module', record.module); params.append('score', record.score); params.append('timestamp', record.timestamp);
+            fetch(GAS_API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params.toString() }).catch(e=>{});
+        } catch(e){}
+    }
+
+    function calculateAndRenderStats() {
+        pushTeacherRecord('圓的性質');
+        const tb = document.getElementById('statsTableBody'); if(!tb) return; tb.innerHTML = "";
+
+        const modules = [{ key: "CIRCLE", name: "圓的性質" }];
+        modules.forEach(m => {
+            let tr = document.createElement('tr'); tr.className = "section-title"; tr.innerHTML = `<th colspan="7">⭕ ${m.name}</th>`; tb.appendChild(tr);
+            let sObj = cacheStorage[m.key].stats;
+            for(let k in sObj) {
+                let r = sObj[k]; let t = r.total; let fRate = t > 0 ? Math.round((r.firstMatch / t) * 100) + '%' : '0%'; let cRate = t > 0 ? Math.round(((r.firstMatch + r.retryMatch) / t) * 100) + '%' : '0%';
+                tb.innerHTML += `<tr><td style='text-align:left; font-weight:bold; padding-left:15px;'>${r.name}</td><td>${t}</td><td style='color:#10b981; font-weight:bold;'>${r.firstMatch}</td><td style='color:#f59e0b;'>${r.retryMatch}</td><td style='color:#ef4444;'>${r.failed}</td><td style='background:#f0fdf4; font-weight:bold; color:#10b981;'>${fRate}</td><td style='background:#eff6ff; font-weight:bold; color:#3b82f6;'>${cRate}</td></tr>`;
+            }
+        });
+        document.getElementById('statsWrongCount').innerText = wrongQuestionBank.length;
+        document.getElementById('printStudentInfo').innerHTML = `<span class="info-span">學生班別：${userRawClass} 班</span><span class="info-span">學號：${userRawSeat} 號</span>`;
+        document.getElementById('printDate').innerText = `產出時間：` + new Date().toLocaleString();
+    }
+
+    function loadTargetStudentDataByTeacher() {
+        let tc = document.getElementById('queryClass').value; let ts = document.getElementById('querySeat').value;
+        userRawClass = tc; userRawSeat = ts;
+        initLocalFallback(userRawClass, userRawSeat).then(() => {
+            calculateAndRenderStats(); alert(`🎉 成功撈取 ${tc}班 ${ts}號 的雲端檔案！`);
+        });
+    }
+
+    function initChallengeSession() {
+        try {
+            session.score = 0; session.currentIdx = 0; session.questionList = [];
+            session.endCondition = document.querySelector('input[name="endCondition"]:checked').value;
+            session.selectedType = document.getElementById('typeSelect').value;
+            
+            if(session.endCondition === 'COUNT') {
+                stopSessionTimer(); session.totalQuestions = parseInt(document.getElementById('totalQuestionsInput').value) || 5;
+                for(let i=0; i<session.totalQuestions; i++) session.questionList.push(generateGeometryQuestion(session.selectedType));
+            } else if(session.endCondition === 'TARGET_SCORE') {
+                stopSessionTimer(); session.targetScore = parseInt(document.getElementById('targetScoreInput').value) || 5;
+                session.totalQuestions = 999;
+                session.questionList.push(generateGeometryQuestion(session.selectedType));
+            } else {
+                let sec = parseInt(document.getElementById('timeLimitSelect').value) || 180; session.timeLimitSetting = sec;
+                session.totalQuestions = 999;
+                session.questionList.push(generateGeometryQuestion(session.selectedType)); startSessionTimer(sec);
+            }
+            loadQuestionToStage();
+        } catch(e) { console.error(e); }
+    }
+
+    function loadQuestionToStage() {
+        try {
+            document.getElementById('ansInput').value = '';
+            document.getElementById('ansInput').disabled = false;
+            document.getElementById('retryInputWrapper').style.display = 'none';
+            document.getElementById('initialFeedbackArea').innerHTML = '';
+            
+            let rawObj = JSON.parse(session.questionList[session.currentIdx]);
+            circleData = rawObj;
+            session.currentTypeNum = circleData.typeNum;
+            
+            document.getElementById('scoreText').innerText = `目前積分: ${session.score} 分`;
+            session.wrongAttemptsThisQuestion = 0; session.wrongAttemptsInTeaching = 0;
+
+            if(session.currentMode === 'CHALLENGE' && cacheStorage.CIRCLE.stats[session.currentTypeNum]) {
+                cacheStorage.CIRCLE.stats[session.currentTypeNum].total++;
+                cloudSaveData();
+            }
+            
+            const step2Title = document.getElementById('step2Title');
+            if(step2Title) step2Title.innerText = (session.currentMode === 'REVIEW') ? "👹 魔王圓形重溫挑戰" : "請根據提示與圖形計算角度";
+
+            setTimeout(() => { 
+                document.getElementById('displayGeo').innerHTML = circleData.expr; 
+                drawCircleGeometry('circleCanvas');
+                showPanel('step2'); 
+                updateProgressBarUI();
+            }, 0);
+        } catch(e) { console.error(e); showPanel('step2'); }
+    }
+
+    function checkFirstAnswer() {
+        let userAns = (session.wrongAttemptsThisQuestion === 1) ? document.getElementById('ansRetryInput').value : document.getElementById('ansInput').value;
+        let uOp = userAns.trim();
+        let currentQ = session.questionList[session.currentIdx];
+        
+        let isCorrect = (uOp === String(circleData.ans));
+        
+        if(isCorrect) {
+            if(session.currentMode === 'CHALLENGE') {
+                if(session.wrongAttemptsThisQuestion === 0) cacheStorage.CIRCLE.stats[session.currentTypeNum].firstMatch++;
+                else cacheStorage.CIRCLE.stats[session.currentTypeNum].retryMatch++;
+            } else if(session.currentMode === 'REVIEW') {
+                wrongQuestionBank = wrongQuestionBank.filter(q => q !== currentQ);
+                cacheStorage.CIRCLE.wrongBook = wrongQuestionBank;
+                alert("🎉 成功擊破錯題！該題已從錯題庫消除。");
+            }
+            showPanel('step3'); executeDirectSuccess();
+        } else {
+            session.wrongAttemptsThisQuestion++;
+            if(session.currentMode === 'CHALLENGE' && session.wrongAttemptsThisQuestion === 1) {
+                cacheStorage.CIRCLE.stats[session.currentTypeNum].failed++;
+                if (!wrongQuestionBank.includes(currentQ)) wrongQuestionBank.push(currentQ);
+                cacheStorage.CIRCLE.wrongBook = wrongQuestionBank;
+            }
+            
+            if(session.wrongAttemptsThisQuestion === 1) {
+                document.getElementById('ansInput').disabled = true; document.getElementById('retryInputWrapper').style.display = 'block'; 
+                let area = document.getElementById('initialFeedbackArea'); area.className="feedback warning"; 
+                area.innerHTML = "❌ 答案不太對喔！<b>首答不扣分</b>。請在下方開闢的<b>補答欄位</b>重新計算並輸入！";
+            } else {
+                if(session.currentMode === 'CHALLENGE') session.score--; 
+                document.getElementById('scoreText').innerText = `目前積分: ${session.score} 分`; 
+                updateProgressBarUI(); showPanel('step3'); executeFinalFailure();
+            }
+            cloudSaveData(); updateReviewMenuUI();
+        }
+    }
+
+    function executeDirectSuccess() {
+        document.getElementById('interactiveStageBox').innerHTML = `
+            <div style="font-size: 18px; margin-bottom: 5px;">${circleData.expr}</div>
+            <div class="canvas-container" style="margin-top: 10px; padding: 15px;">
+                <canvas id="circleCanvasStep3" width="400" height="400"></canvas>
+            </div>
+            <div style="margin-top: 15px;"><span style="white-space: nowrap;">📐 計算成功：<span style="color:#00ff00; font-weight:900;">${circleData.ans}°</span></span></div>
+        `;
+        drawCircleGeometry('circleCanvasStep3'); 
+        document.getElementById('teachingZone').style.display="none"; document.getElementById('solveBtn').style.display="none"; document.getElementById('nextBtn').style.display="block";
+        let f = document.getElementById('feedbackArea'); f.className="feedback success";
+        
+        if(session.currentMode==='CHALLENGE') { 
+            session.score++; document.getElementById('scoreText').innerText = `目前積分: ${session.score} 分`; updateProgressBarUI(); 
+            f.innerHTML="🎉 恭喜完全正確！定理邏輯非常精準！"; 
+        } else f.innerHTML="🎉 計算完全正確！";
+        
+        cloudSaveData(); updateReviewMenuUI(); setupNextButtonLabel();
+    }
+
+    function executeFinalFailure() {
+        document.getElementById('interactiveStageBox').innerHTML = `
+            <div style="font-size: 18px; margin-bottom: 5px;">${circleData.expr}</div>
+            <div class="canvas-container" style="margin-top: 10px; padding: 15px;">
+                <canvas id="circleCanvasStep3" width="400" height="400"></canvas>
+            </div>
+        `;
+        drawCircleGeometry('circleCanvasStep3'); 
+        document.getElementById('nextBtn').style.display="none"; document.getElementById('solveBtn').style.display="block"; document.getElementById('teachingZone').style.display="none";
+        let f=document.getElementById('feedbackArea'); f.className="feedback error"; 
+        f.innerHTML = session.currentMode==='CHALLENGE' ? "❌ 補答依然有誤。<span style='color:red;'>[挑戰失敗] 積分 -1 分！</span>請點擊下方開啟定理引導教學。" : "❌ 角度計算失敗。請點擊下方開啟引導。";
+    }
+
+    function startInteractiveSolving() { 
+        document.getElementById('solveBtn').style.display="none"; document.getElementById('teachingZone').style.display="flex"; 
+        currentTeachStep = 0; renderMathSteps(); loadTeachingStepUI();
+    }
+
+    function loadTeachingStepUI() {
+        document.getElementById('dynamicStepArea').style.display="block"; document.getElementById('stepInput').value = ""; document.getElementById('teachingWrongArea').innerHTML = "";
+        if (currentTeachStep < circleData.steps.length) {
+            let stepObj = circleData.steps[currentTeachStep];
+            document.getElementById('stepTip').innerHTML = `<b>💡 定理提示：</b>${stepObj.tip}`;
+            document.getElementById('stepLabel').innerHTML = `<strong>${stepObj.prompt}</strong>`;
+        }
+    }
+
+    function executeCurrentStep() {
+        let uOp = document.getElementById('stepInput').value.trim();
+        let stepObj = circleData.steps[currentTeachStep];
+        
+        if(uOp === String(circleData.ans) && currentTeachStep < circleData.steps.length - 1) {
+            alert("🚀 聰明！直接算出最終答案！"); executeDirectSuccess(); return;
+        }
+
+        let isCorrect = (uOp === stepObj.expected);
+        
+        if (isCorrect) {
+            alert("🎯 步驟正確！"); session.wrongAttemptsInTeaching = 0; currentTeachStep++;
+            if (currentTeachStep >= circleData.steps.length) {
+                document.getElementById('interactiveStageBox').innerHTML = `
+                    <div style="font-size: 18px; margin-bottom: 5px;">${circleData.expr}</div>
+                    <div class="canvas-container" style="margin-top: 10px; padding: 15px;">
+                        <canvas id="circleCanvasStep3" width="400" height="400"></canvas>
+                    </div>
+                    <div style="margin-top: 15px;"><span style="white-space: nowrap;">📐 計算成功：<span style="color:#00ff00; font-weight:900;">${circleData.ans}°</span></span></div>
+                `;
+                drawCircleGeometry('circleCanvasStep3');
+                document.getElementById('dynamicStepArea').style.display="none"; document.getElementById('nextBtn').style.display="block"; setupNextButtonLabel();
+            } else {
+                loadTeachingStepUI();
+            }
+            renderMathSteps();
+        } else {
+            session.wrongAttemptsInTeaching++; alert("❌ 數值不正確，請再試一次！");
+            let area = document.getElementById('teachingWrongArea');
+            if (session.wrongAttemptsInTeaching >= 3) {
+                area.innerHTML = `<div style="margin-top:10px; padding:10px; background:#fef2f2; border-left:4px solid var(--danger); border-radius:6px; font-weight:bold; color:var(--danger);">💡 密鑰提示：正確輸入為 <b>${stepObj.expected}</b></div>`;
+            }
+        }
+    }
+
+    function renderMathSteps() {
+        const box = document.getElementById('mathStepBox');
+        let html = `<div class="step-line ${currentTeachStep===0?'active-line':''}">[原題]：${circleData.expr.replace('<br>',' ')}</div>`;
+        for (let i = 0; i < circleData.steps.length; i++) {
+            if (currentTeachStep > i) {
+                let step = circleData.steps[i];
+                html += `<div class="step-line ${currentTeachStep===(i+1)?'active-line':''}">[步 ${i+1}] ${step.prompt.replace('：','')} &rArr; ${step.expected}</div>`;
+            }
+        }
+        if (currentTeachStep >= circleData.steps.length) { html += `<div class='step-line active-line'>[最終答案] &rArr; ${circleData.ans}° 🎯</div>`; }
+        box.innerHTML = html;
+    }
+
+    function setupNextButtonLabel() { 
+        let n = document.getElementById('nextBtn'); 
+        if(session.currentMode==='CHALLENGE' || session.currentMode==='CYCLIC_TRAINING') { n.innerText = (session.endCondition==='TIME_LIMIT') ? "下一道瘋狂挑戰題 ➡️" : ((session.currentIdx < session.questionList.length-1)?"前進下一題 ➡️":"🏁 挑戰結束，查看報告"); } 
+        else if(session.currentMode==='REVIEW') n.innerText = (session.currentIdx === session.totalQuestions-1 || wrongQuestionBank.length===0)?"🏁 結束溫習返回目錄":"下一道魔王關卡 ➡️"; 
+        else n.innerText="↩️ 返回選單"; 
+    }
+
+    function advanceQuestion() { 
+        if(session.currentMode==='CHALLENGE' || session.currentMode==='CYCLIC_TRAINING') { 
+            if(session.endCondition==='COUNT') { 
+                if(session.currentIdx < session.questionList.length-1) { session.currentIdx++; loadQuestionToStage(); } 
+                else { calculateAndRenderStats(); showPanel('step_stats_panel'); } 
+            } else if (session.endCondition === 'TARGET_SCORE') {
+                if (session.score >= session.targetScore) {
+                    alert("🏆 積分達標！完美掌握！"); calculateAndRenderStats(); showPanel('step_stats_panel');
+                } else {
+                    session.currentIdx++; session.questionList.push(generateGeometryQuestion(session.selectedType)); loadQuestionToStage();
+                }
+            } else { 
+                session.currentIdx++; session.questionList.push(generateGeometryQuestion(session.selectedType)); loadQuestionToStage(); 
+            } 
+        } else if(session.currentMode==='REVIEW') { 
+            let comb = [...wrongQuestionBank]; 
+            if(comb.length===0 || session.currentIdx >= session.totalQuestions-1) { resetToMainMenu(false); } 
+            else { session.currentIdx++; session.totalQuestions=comb.length; session.questionList=comb; loadQuestionToStage(); } 
+        } else resetToMainMenu(false); 
+    }
+
+    function updateProgressBarUI() { 
+        let pct = 0; let txt = ""; 
+        if (session.currentMode === 'CHALLENGE' || session.currentMode==='CYCLIC_TRAINING') { 
+            if (session.endCondition === 'COUNT') { 
+                pct = Math.round(((session.currentIdx + 1) / session.totalQuestions) * 100); txt = `關卡進度: ${session.currentIdx + 1} / ${session.totalQuestions}`; 
+            } else if (session.endCondition === 'TARGET_SCORE') {
+                pct = Math.max(0, Math.min(100, Math.round((session.score / session.targetScore) * 100))); txt = `達標分數進度 (${session.score}/${session.targetScore})`;
+            } else { 
+                pct = Math.round((timeLeft / session.timeLimitSetting) * 100); txt = `⏳ 限時衝刺中...`; 
+            } 
+        } else if (session.currentMode === 'REVIEW') { 
+            pct = Math.round(((session.currentIdx + 1) / session.totalQuestions) * 100); txt = `錯題庫復原: ${session.currentIdx + 1}/${session.totalQuestions}`; 
+        } else { 
+            pct = 100; txt = `沙盒解析引導中`; 
+        } 
+        document.getElementById('progressText').innerText = txt; document.getElementById('progressTextStage3').innerText = txt; 
+        document.getElementById('progressBarFill').style.width = `${pct}%`; document.getElementById('progressBarFillStage3').style.width = `${pct}%`; 
+    }
+
+    function startSessionTimer(seconds) { stopSessionTimer(); timeLeft = seconds; updateTimerDisplay(); document.getElementById('globalTimerBox').style.display = 'inline-block'; document.getElementById('globalTimerBoxStage3').style.display = 'inline-block'; timerInterval = setInterval(() => { timeLeft--; updateTimerDisplay(); if(session.endCondition==='TIME_LIMIT') updateProgressBarUI(); if (timeLeft <= 0) { stopSessionTimer(); alert("⏱️ 時間到！進行數據結算！"); finishTimeLimitSession(); } }, 1000); }
+    function stopSessionTimer() { if(timerInterval) { clearInterval(timerInterval); timerInterval = null; } document.getElementById('globalTimerBox').style.display = 'none'; document.getElementById('globalTimerBoxStage3').style.display = 'none'; }
+    function updateTimerDisplay() { let m = Math.floor(timeLeft / 60); let s = timeLeft % 60; let str = `⏱️ ${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`; document.getElementById('globalTimerBox').innerText = str; document.getElementById('globalTimerBoxStage3').innerText = str; }
+    function finishTimeLimitSession() { stopSessionTimer(); calculateAndRenderStats(); showPanel('step_stats_panel'); }
+
+    function resetToMainMenu(nc) { 
+        if(nc && (document.getElementById('step2').classList.contains('active')||document.getElementById('step3').classList.contains('active'))) { 
+            if(!confirm("確定要中途退出挑戰嗎？")) return; 
+        } 
+        stopSessionTimer(); document.getElementById('nextBtn').style.display="none"; document.getElementById('teachingZone').style.display="none"; cloudSaveData(); updateReviewMenuUI(); showPanel('step1'); 
+    }
+
+    function updateReviewMenuUI() { 
+        let reviewBtn = document.getElementById('reviewModeCard'); 
+        if(reviewBtn) reviewBtn.classList.toggle('disabled', wrongQuestionBank.length === 0); 
+        let title = document.getElementById('reviewTitle'); 
+        if(title) title.innerText = `錯題庫 (${wrongQuestionBank.length} 題)`; 
+    }
+
+    function logoutSession() { 
+        if(confirm("確定登出系統嗎？")) { 
+            stopSessionTimer(); 
+            localStorage.removeItem("Active_User_Role"); localStorage.removeItem("Active_User_Class"); localStorage.removeItem("Active_User_Seat"); localStorage.removeItem("Active_User_TeacherID"); 
+            window.location.replace("index.html"); 
+        } 
+    }
+</script>
+</body>
+</html>
