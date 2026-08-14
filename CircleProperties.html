@@ -295,8 +295,27 @@
         drawMathText('O', cx - 15, cy + 20);
 
         function drawMathText(txt, x, y, color='#000') { ctx.fillStyle = color; ctx.font = 'italic 20px "Times New Roman", Times, serif'; ctx.fillText(txt, x, y); }
-        function drawValueText(txt, x, y, color='#000') { ctx.fillStyle = color; ctx.font = 'bold 16px "Times New Roman", Times, serif'; ctx.fillText(txt, x, y); }
         function drawAngleArc(x, y, s, e, rad=25) { ctx.beginPath(); ctx.arc(x, y, rad, s, e); ctx.stroke(); }
+        
+        // 核心功能：動態角平分線文字定位系統
+        function drawAutoText(txt, pt, p1, p2, dist, color='#000') {
+            let a1 = Math.atan2(p1.y - pt.y, p1.x - pt.x);
+            let a2 = Math.atan2(p2.y - pt.y, p2.x - pt.x);
+            
+            let diff = a1 - a2;
+            // 確保取到的是三角形/多邊形內部的角平分線
+            while (diff <= -Math.PI) diff += 2 * Math.PI;
+            while (diff > Math.PI) diff -= 2 * Math.PI;
+            
+            let mid = a2 + diff / 2;
+
+            ctx.fillStyle = color; 
+            ctx.font = 'bold 16px "Times New Roman", Times, serif';
+            let tw = ctx.measureText(txt).width;
+            let tx = pt.x + dist * Math.cos(mid) - tw/2;
+            let ty = pt.y + dist * Math.sin(mid) + 6; // 修正基線置中
+            ctx.fillText(txt, tx, ty);
+        }
         
         function getPt(angleDeg) {
             let rad = (angleDeg - 90) * Math.PI / 180; 
@@ -322,12 +341,13 @@
             let a4 = Math.atan2(ptB.y - cy, ptB.x - cx);
             drawAngleArc(cx, cy, a4, a3, 20);
 
+            let ptO = {x: cx, y: cy};
             if(subType === 'FIND_CENTER') {
-                drawValueText(`${vals[0]}°`, ptP.x - 12, ptP.y + 40);
-                drawValueText('θ', cx - 6, cy + 35, '#ef4444');
+                drawAutoText(`${vals[0]}°`, ptP, ptA, ptB, 45); // P點文字
+                drawAutoText('θ', ptO, ptA, ptB, 35, '#ef4444'); // O點文字
             } else {
-                drawValueText(`${vals[0]}°`, cx - 15, cy + 35);
-                drawValueText('θ', ptP.x - 6, ptP.y + 40, '#ef4444');
+                drawAutoText(`${vals[0]}°`, ptO, ptA, ptB, 35);
+                drawAutoText('θ', ptP, ptA, ptB, 45, '#ef4444');
             }
         }
         else if (typeNum === 2) { // 同弓形內的圓周角
@@ -346,8 +366,8 @@
             let a3 = Math.atan2(ptA.y - ptQ.y, ptA.x - ptQ.x); let a4 = Math.atan2(ptB.y - ptQ.y, ptB.x - ptQ.x);
             drawAngleArc(ptQ.x, ptQ.y, a4, a3, 30);
 
-            drawValueText(`${vals[0]}°`, ptP.x + 15, ptP.y + 35);
-            drawValueText('θ', ptQ.x - 30, ptQ.y + 35, '#ef4444');
+            drawAutoText(`${vals[0]}°`, ptP, ptA, ptB, 48); // P點文字
+            drawAutoText('θ', ptQ, ptA, ptB, 48, '#ef4444'); // Q點文字
         }
         else if (typeNum === 3) { // 半圓上的圓周角
             let ptA = getPt(270); let ptB = getPt(90); 
@@ -372,11 +392,11 @@
             drawAngleArc(ptB.x, ptB.y, a6, a5, 35);
 
             if(subType === 'FIND_A') {
-                drawValueText(`${vals[0]}°`, ptB.x - 45, ptB.y - 10);
-                drawValueText('θ', ptA.x + 30, ptA.y - 10, '#ef4444');
+                drawAutoText(`${vals[0]}°`, ptB, ptA, ptP, 50);
+                drawAutoText('θ', ptA, ptB, ptP, 50, '#ef4444');
             } else {
-                drawValueText(`${vals[0]}°`, ptA.x + 30, ptA.y - 10);
-                drawValueText('θ', ptB.x - 30, ptB.y - 10, '#ef4444');
+                drawAutoText(`${vals[0]}°`, ptA, ptB, ptP, 50);
+                drawAutoText('θ', ptB, ptA, ptP, 50, '#ef4444');
             }
         }
         else if (typeNum === 4) { // 圓內接四邊形
@@ -393,12 +413,14 @@
                 let a3 = Math.atan2(ptB.y - ptC.y, ptB.x - ptC.x); let a4 = Math.atan2(ptD.y - ptC.y, ptD.x - ptC.x);
                 drawAngleArc(ptC.x, ptC.y, a4, a3, 25);
 
-                drawValueText(`${vals[0]}°`, ptA.x + 15, ptA.y + 15);
-                drawValueText('θ', ptC.x - 25, ptC.y - 10, '#ef4444');
+                drawAutoText(`${vals[0]}°`, ptA, ptB, ptD, 42);
+                drawAutoText('θ', ptC, ptB, ptD, 42, '#ef4444');
             } else {
                 let dx = ptC.x - ptD.x; let dy = ptC.y - ptD.y;
                 let len = Math.sqrt(dx*dx + dy*dy);
                 let ex = ptC.x + (dx/len)*40; let ey = ptC.y + (dy/len)*40;
+                let ptE = {x: ex, y: ey};
+                
                 ctx.beginPath(); ctx.moveTo(ptC.x, ptC.y); ctx.lineTo(ex, ey); ctx.stroke();
                 drawMathText('E', ex + 10, ey + 10);
 
@@ -409,11 +431,11 @@
                 drawAngleArc(ptC.x, ptC.y, a3, a4, 20);
 
                 if (subType === 'FIND_EXT') {
-                    drawValueText(`${vals[0]}°`, ptA.x + 15, ptA.y + 15);
-                    drawValueText('θ', ptC.x + 15, ptC.y - 15, '#ef4444');
+                    drawAutoText(`${vals[0]}°`, ptA, ptB, ptD, 42);
+                    drawAutoText('θ', ptC, ptB, ptE, 35, '#ef4444'); // ptC 外角是由 ptB, ptC, ptE 組成
                 } else {
-                    drawValueText(`${vals[0]}°`, ptC.x + 15, ptC.y - 15);
-                    drawValueText('θ', ptA.x + 15, ptA.y + 15, '#ef4444');
+                    drawAutoText(`${vals[0]}°`, ptC, ptB, ptE, 35);
+                    drawAutoText('θ', ptA, ptB, ptD, 42, '#ef4444');
                 }
             }
         }
