@@ -255,7 +255,7 @@
     };
 
     let session = { currentMode: 'CHALLENGE', endCondition: 'COUNT', totalQuestions: 5, targetScore: 5, timeLimitSetting: 300, score: 0, currentIdx: 0, questionList: [], selectedType: 'MIX', currentTypeNum: 1, wrongAttemptsThisQuestion: 0, wrongAttemptsInTeaching: 0 };
-    let circleData = { typeNum: 1, subType: "", title: "", expr: "", ans: 0, values: [], steps: [] };
+    let circleData = { typeNum: 1, subType: "", title: "", expr: "", ans: 0, values: [], steps: [], visuals: {} };
     let currentTeachStep = 0;
     let timerInterval = null; let timeLeft = 0;
     let wrongQuestionBank = [];
@@ -282,6 +282,8 @@
         let typeNum = circleData.typeNum;
         let subType = circleData.subType;
         let vals = circleData.values;
+        // 抓取題目生成時產生的動態旋轉與角度比例參數
+        let vis = circleData.visuals || {}; 
 
         // 畫主圓
         ctx.beginPath();
@@ -295,7 +297,19 @@
         drawMathText('O', cx - 15, cy + 20);
 
         function drawMathText(txt, x, y, color='#000') { ctx.fillStyle = color; ctx.font = 'italic 20px "Times New Roman", Times, serif'; ctx.fillText(txt, x, y); }
-        function drawAngleArc(x, y, s, e, rad=25) { ctx.beginPath(); ctx.arc(x, y, rad, s, e); ctx.stroke(); }
+        
+        // 防反轉圓弧繪製 (永遠畫在較小的夾角端，確保畫出的是內角)
+        function drawAngleArcSafe(pt, p1, p2, rad=25) {
+            let a1 = Math.atan2(p1.y - pt.y, p1.x - pt.x);
+            let a2 = Math.atan2(p2.y - pt.y, p2.x - pt.x);
+            let diff = a1 - a2;
+            while (diff <= -Math.PI) diff += 2 * Math.PI;
+            while (diff > Math.PI) diff -= 2 * Math.PI;
+            ctx.beginPath();
+            if (diff > 0) ctx.arc(pt.x, pt.y, rad, a2, a1);
+            else ctx.arc(pt.x, pt.y, rad, a1, a2);
+            ctx.stroke();
+        }
         
         // 核心功能：動態角平分線文字定位系統
         function drawAutoText(txt, pt, p1, p2, dist, color='#000') {
@@ -303,17 +317,15 @@
             let a2 = Math.atan2(p2.y - pt.y, p2.x - pt.x);
             
             let diff = a1 - a2;
-            // 確保取到的是三角形/多邊形內部的角平分線
             while (diff <= -Math.PI) diff += 2 * Math.PI;
             while (diff > Math.PI) diff -= 2 * Math.PI;
             
             let mid = a2 + diff / 2;
-
             ctx.fillStyle = color; 
             ctx.font = 'bold 16px "Times New Roman", Times, serif';
             let tw = ctx.measureText(txt).width;
             let tx = pt.x + dist * Math.cos(mid) - tw/2;
-            let ty = pt.y + dist * Math.sin(mid) + 6; // 修正基線置中
+            let ty = pt.y + dist * Math.sin(mid) + 6;
             ctx.fillText(txt, tx, ty);
         }
         
@@ -323,25 +335,26 @@
         }
 
         if(typeNum === 1) { // 圓心角與圓周角
-            let angA = 220; let angB = 140; let angP = 0;
-            let ptA = getPt(angA); let ptB = getPt(angB); let ptP = getPt(angP);
+            let ptA = getPt(vis.angA ?? 220); 
+            let ptB = getPt(vis.angB ?? 140); 
+            let ptP = getPt(vis.angP ?? 0);
+            let ptO = {x: cx, y: cy};
 
             ctx.beginPath(); ctx.moveTo(ptA.x, ptA.y); ctx.lineTo(cx, cy); ctx.lineTo(ptB.x, ptB.y); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(ptA.x, ptA.y); ctx.lineTo(ptP.x, ptP.y); ctx.lineTo(ptB.x, ptB.y); ctx.stroke();
 
-            drawMathText('A', ptA.x - 20, ptA.y + 10);
-            drawMathText('B', ptB.x + 10, ptB.y + 10);
-            drawMathText('P', ptP.x - 5, ptP.y - 15);
+            // 動態文字排版 (往外延伸)
+            let pAOff = { x: (ptA.x - cx)*0.18, y: (ptA.y - cy)*0.18 };
+            let pBOff = { x: (ptB.x - cx)*0.18, y: (ptB.y - cy)*0.18 };
+            let pPOff = { x: (ptP.x - cx)*0.18, y: (ptP.y - cy)*0.18 };
 
-            let a1 = Math.atan2(ptA.y - ptP.y, ptA.x - ptP.x);
-            let a2 = Math.atan2(ptB.y - ptP.y, ptB.x - ptP.x);
-            drawAngleArc(ptP.x, ptP.y, a2, a1, 30);
+            drawMathText('A', ptA.x + pAOff.x - 5, ptA.y + pAOff.y + 5);
+            drawMathText('B', ptB.x + pBOff.x - 5, ptB.y + pBOff.y + 5);
+            drawMathText('P', ptP.x + pPOff.x - 5, ptP.y + pPOff.y + 5);
 
-            let a3 = Math.atan2(ptA.y - cy, ptA.x - cx);
-            let a4 = Math.atan2(ptB.y - cy, ptB.x - cx);
-            drawAngleArc(cx, cy, a4, a3, 20);
+            drawAngleArcSafe(ptP, ptA, ptB, 30);
+            drawAngleArcSafe(ptO, ptA, ptB, 20);
 
-            let ptO = {x: cx, y: cy};
             if(subType === 'FIND_CENTER') {
                 drawAutoText(`${vals[0]}°`, ptP, ptA, ptB, 45); // P點文字
                 drawAutoText('θ', ptO, ptA, ptB, 35, '#ef4444'); // O點文字
@@ -351,45 +364,47 @@
             }
         }
         else if (typeNum === 2) { // 同弓形內的圓周角
-            let ptA = getPt(230); let ptB = getPt(130);
-            let ptP = getPt(320); let ptQ = getPt(40);
+            let ptA = getPt(vis.angA ?? 230); let ptB = getPt(vis.angB ?? 130);
+            let ptP = getPt(vis.angP ?? 320); let ptQ = getPt(vis.angQ ?? 40);
 
             ctx.beginPath(); ctx.moveTo(ptA.x, ptA.y); ctx.lineTo(ptB.x, ptB.y); ctx.stroke(); 
             ctx.beginPath(); ctx.moveTo(ptA.x, ptA.y); ctx.lineTo(ptP.x, ptP.y); ctx.lineTo(ptB.x, ptB.y); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(ptA.x, ptA.y); ctx.lineTo(ptQ.x, ptQ.y); ctx.lineTo(ptB.x, ptB.y); ctx.stroke();
 
-            drawMathText('A', ptA.x - 20, ptA.y + 10); drawMathText('B', ptB.x + 10, ptB.y + 10);
-            drawMathText('P', ptP.x - 20, ptP.y - 10); drawMathText('Q', ptQ.x + 10, ptQ.y - 10);
+            let pAOff = { x: (ptA.x - cx)*0.18, y: (ptA.y - cy)*0.18 };
+            let pBOff = { x: (ptB.x - cx)*0.18, y: (ptB.y - cy)*0.18 };
+            let pPOff = { x: (ptP.x - cx)*0.18, y: (ptP.y - cy)*0.18 };
+            let pQOff = { x: (ptQ.x - cx)*0.18, y: (ptQ.y - cy)*0.18 };
 
-            let a1 = Math.atan2(ptA.y - ptP.y, ptA.x - ptP.x); let a2 = Math.atan2(ptB.y - ptP.y, ptB.x - ptP.x);
-            drawAngleArc(ptP.x, ptP.y, a2, a1, 30);
-            let a3 = Math.atan2(ptA.y - ptQ.y, ptA.x - ptQ.x); let a4 = Math.atan2(ptB.y - ptQ.y, ptB.x - ptQ.x);
-            drawAngleArc(ptQ.x, ptQ.y, a4, a3, 30);
+            drawMathText('A', ptA.x + pAOff.x - 5, ptA.y + pAOff.y + 5); 
+            drawMathText('B', ptB.x + pBOff.x - 5, ptB.y + pBOff.y + 5);
+            drawMathText('P', ptP.x + pPOff.x - 5, ptP.y + pPOff.y + 5); 
+            drawMathText('Q', ptQ.x + pQOff.x - 5, ptQ.y + pQOff.y + 5);
+
+            drawAngleArcSafe(ptP, ptA, ptB, 30);
+            drawAngleArcSafe(ptQ, ptA, ptB, 30);
 
             drawAutoText(`${vals[0]}°`, ptP, ptA, ptB, 48); // P點文字
             drawAutoText('θ', ptQ, ptA, ptB, 48, '#ef4444'); // Q點文字
         }
         else if (typeNum === 3) { // 半圓上的圓周角
-            let ptA = getPt(270); let ptB = getPt(90); 
-            let ptP = getPt(10); 
+            let ptA = getPt(vis.angA ?? 270); let ptB = getPt(vis.angB ?? 90); 
+            let ptP = getPt(vis.angP ?? 10); 
 
             ctx.beginPath(); ctx.moveTo(ptA.x, ptA.y); ctx.lineTo(ptB.x, ptB.y); ctx.stroke(); 
             ctx.beginPath(); ctx.moveTo(ptA.x, ptA.y); ctx.lineTo(ptP.x, ptP.y); ctx.lineTo(ptB.x, ptB.y); ctx.stroke();
 
-            drawMathText('A', ptA.x - 20, ptA.y + 5); drawMathText('B', ptB.x + 10, ptB.y + 5);
-            drawMathText('P', ptP.x, ptP.y - 10);
+            let pAOff = { x: (ptA.x - cx)*0.18, y: (ptA.y - cy)*0.18 };
+            let pBOff = { x: (ptB.x - cx)*0.18, y: (ptB.y - cy)*0.18 };
+            let pPOff = { x: (ptP.x - cx)*0.18, y: (ptP.y - cy)*0.18 };
 
-            let a1 = Math.atan2(ptA.y - ptP.y, ptA.x - ptP.x);
-            let a2 = Math.atan2(ptB.y - ptP.y, ptB.x - ptP.x);
-            drawAngleArc(ptP.x, ptP.y, a2, a1, 20); 
+            drawMathText('A', ptA.x + pAOff.x - 5, ptA.y + pAOff.y + 5); 
+            drawMathText('B', ptB.x + pBOff.x - 5, ptB.y + pBOff.y + 5);
+            drawMathText('P', ptP.x + pPOff.x - 5, ptP.y + pPOff.y + 5);
 
-            let a3 = Math.atan2(ptP.y - ptA.y, ptP.x - ptA.x);
-            let a4 = Math.atan2(ptB.y - ptA.y, ptB.x - ptA.x);
-            drawAngleArc(ptA.x, ptA.y, a3, a4, 35);
-
-            let a5 = Math.atan2(ptA.y - ptB.y, ptA.x - ptB.x);
-            let a6 = Math.atan2(ptP.y - ptB.y, ptP.x - ptB.x);
-            drawAngleArc(ptB.x, ptB.y, a6, a5, 35);
+            drawAngleArcSafe(ptP, ptA, ptB, 20); 
+            drawAngleArcSafe(ptA, ptP, ptB, 35);
+            drawAngleArcSafe(ptB, ptP, ptA, 35);
 
             if(subType === 'FIND_A') {
                 drawAutoText(`${vals[0]}°`, ptB, ptA, ptP, 50);
@@ -400,18 +415,23 @@
             }
         }
         else if (typeNum === 4) { // 圓內接四邊形
-            let ptA = getPt(220); let ptB = getPt(320); let ptC = getPt(60); let ptD = getPt(140);
+            let ptA = getPt(vis.angA ?? 220); let ptB = getPt(vis.angB ?? 320); let ptC = getPt(vis.angC ?? 60); let ptD = getPt(vis.angD ?? 140);
             
             ctx.beginPath(); ctx.moveTo(ptA.x, ptA.y); ctx.lineTo(ptB.x, ptB.y); ctx.lineTo(ptC.x, ptC.y); ctx.lineTo(ptD.x, ptD.y); ctx.closePath(); ctx.stroke();
             
-            drawMathText('A', ptA.x - 20, ptA.y - 10); drawMathText('B', ptB.x - 10, ptB.y - 15);
-            drawMathText('C', ptC.x + 10, ptC.y + 10); drawMathText('D', ptD.x - 10, ptD.y + 20);
+            let pAOff = { x: (ptA.x - cx)*0.18, y: (ptA.y - cy)*0.18 };
+            let pBOff = { x: (ptB.x - cx)*0.18, y: (ptB.y - cy)*0.18 };
+            let pCOff = { x: (ptC.x - cx)*0.18, y: (ptC.y - cy)*0.18 };
+            let pDOff = { x: (ptD.x - cx)*0.18, y: (ptD.y - cy)*0.18 };
+
+            drawMathText('A', ptA.x + pAOff.x - 5, ptA.y + pAOff.y + 5); 
+            drawMathText('B', ptB.x + pBOff.x - 5, ptB.y + pBOff.y + 5);
+            drawMathText('C', ptC.x + pCOff.x - 5, ptC.y + pCOff.y + 5); 
+            drawMathText('D', ptD.x + pDOff.x - 5, ptD.y + pDOff.y + 5);
 
             if(subType === 'OPPOSITE') {
-                let a1 = Math.atan2(ptD.y - ptA.y, ptD.x - ptA.x); let a2 = Math.atan2(ptB.y - ptA.y, ptB.x - ptA.x);
-                drawAngleArc(ptA.x, ptA.y, a2, a1, 25);
-                let a3 = Math.atan2(ptB.y - ptC.y, ptB.x - ptC.x); let a4 = Math.atan2(ptD.y - ptC.y, ptD.x - ptC.x);
-                drawAngleArc(ptC.x, ptC.y, a4, a3, 25);
+                drawAngleArcSafe(ptA, ptD, ptB, 25);
+                drawAngleArcSafe(ptC, ptD, ptB, 25);
 
                 drawAutoText(`${vals[0]}°`, ptA, ptB, ptD, 42);
                 drawAutoText('θ', ptC, ptB, ptD, 42, '#ef4444');
@@ -424,15 +444,12 @@
                 ctx.beginPath(); ctx.moveTo(ptC.x, ptC.y); ctx.lineTo(ex, ey); ctx.stroke();
                 drawMathText('E', ex + 10, ey + 10);
 
-                let a1 = Math.atan2(ptD.y - ptA.y, ptD.x - ptA.x); let a2 = Math.atan2(ptB.y - ptA.y, ptB.x - ptA.x);
-                drawAngleArc(ptA.x, ptA.y, a2, a1, 25);
-
-                let a3 = Math.atan2(ey - ptC.y, ex - ptC.x); let a4 = Math.atan2(ptB.y - ptC.y, ptB.x - ptC.x);
-                drawAngleArc(ptC.x, ptC.y, a3, a4, 20);
+                drawAngleArcSafe(ptA, ptD, ptB, 25);
+                drawAngleArcSafe(ptC, ptB, ptE, 20);
 
                 if (subType === 'FIND_EXT') {
                     drawAutoText(`${vals[0]}°`, ptA, ptB, ptD, 42);
-                    drawAutoText('θ', ptC, ptB, ptE, 35, '#ef4444'); // ptC 外角是由 ptB, ptC, ptE 組成
+                    drawAutoText('θ', ptC, ptB, ptE, 35, '#ef4444'); 
                 } else {
                     drawAutoText(`${vals[0]}°`, ptC, ptB, ptE, 35);
                     drawAutoText('θ', ptA, ptB, ptD, 42, '#ef4444');
@@ -445,6 +462,10 @@
     function generateGeometryQuestion(mode) {
         let typeNum = (mode === 'MIX') ? Math.floor(Math.random() * 4) + 1 : parseInt(mode);
         let expr = "", ans = 0, steps = [], subType = "", values = [];
+        
+        // 每次生成題目，產生隨機基礎旋轉角度與相對應的等比例夾角設定
+        let rot = Math.floor(Math.random() * 360);
+        let visuals = {};
 
         if (typeNum === 1) { // 圓心角與圓周角
             let findCenter = Math.random() > 0.5;
@@ -457,6 +478,7 @@
                     { prompt: "根據定理，圓心角是同弧圓周角的幾倍？", expected: "2", tip: "圓心角兩倍於圓周角" },
                     { prompt: "因此 θ 等於多少度？", expected: String(ans), tip: `計算 ${p} × 2` }
                 ];
+                visuals.angA = rot - ans/2; visuals.angB = rot + ans/2; visuals.angP = rot + 180 + (Math.random()*60-30);
             } else {
                 subType = 'FIND_PERI';
                 let c = (Math.floor(Math.random()*40)+30) * 2; 
@@ -466,8 +488,9 @@
                     { prompt: "根據定理，圓周角是同弧圓心角的幾分之幾？(請輸入小數)", expected: "0.5", tip: "圓心角兩倍於圓周角，反過來就是一半" },
                     { prompt: "因此 θ 等於多少度？", expected: String(ans), tip: `計算 ${c} ÷ 2` }
                 ];
+                visuals.angA = rot - c/2; visuals.angB = rot + c/2; visuals.angP = rot + 180 + (Math.random()*60-30);
             }
-            return JSON.stringify({ typeNum, subType, values, title: "圓心角與圓周角", expr, ans, steps });
+            return JSON.stringify({ typeNum, subType, values, title: "圓心角與圓周角", expr, ans, steps, visuals });
         } 
         else if (typeNum === 2) { // 同弓形內的圓周角
             subType = 'SAME_SEG';
@@ -478,32 +501,44 @@
                 { prompt: "在同一個弓形內的圓周角，它們的大小關係是？(請輸入: 相等/不相等)", expected: "相等", tip: "同弓形內的圓周角" },
                 { prompt: "因此 θ 等於多少度？", expected: String(ans), tip: `直接寫出答案` }
             ];
-            return JSON.stringify({ typeNum, subType, values, title: "同弓形內的圓周角", expr, ans, steps });
+            let cAngle = p * 2; 
+            visuals.angA = rot - cAngle/2; visuals.angB = rot + cAngle/2;
+            visuals.angP = rot + 180 - (Math.random()*20+15); visuals.angQ = rot + 180 + (Math.random()*20+15);
+            return JSON.stringify({ typeNum, subType, values, title: "同弓形內的圓周角", expr, ans, steps, visuals });
         }
         else if (typeNum === 3) { // 半圓上的圓周角
             let findA = Math.random() > 0.5;
             let knownAng = Math.floor(Math.random()*40)+25; 
             ans = 90 - knownAng; 
             
+            visuals.angA = rot; visuals.angB = rot + 180;
             if (findA) {
                 subType = 'FIND_A'; values = [knownAng];
                 expr = `圖中，<i>AB</i> 是圓的直徑。<br>已知 ∠<i>PBA</i> = ${knownAng}°，請問 θ 是多少度？`;
+                visuals.angP = rot + 180 - 2 * knownAng;
             } else {
                 subType = 'FIND_B'; values = [knownAng];
                 expr = `圖中，<i>AB</i> 是圓的直徑。<br>已知 ∠<i>PAB</i> = ${knownAng}°，請問 θ 是多少度？`;
+                visuals.angP = rot + 2 * knownAng;
             }
             steps = [
                 { prompt: "半圓上的圓周角 (∠APB) 是多少度？", expected: "90", tip: "直徑所對的圓周角是直角" },
                 { prompt: "三角形內角和是多少度？", expected: "180", tip: "△內角和" },
                 { prompt: "因此 θ 等於多少度？", expected: String(ans), tip: `計算 180 - 90 - ${knownAng}` }
             ];
-            return JSON.stringify({ typeNum, subType, values, title: "半圓上的圓周角", expr, ans, steps });
+            return JSON.stringify({ typeNum, subType, values, title: "半圓上的圓周角", expr, ans, steps, visuals });
         }
         else { // 圓內接四邊形
             let isOpposite = Math.random() > 0.5;
+            let a = Math.floor(Math.random()*60)+60; 
+            
+            visuals.angA = rot; 
+            visuals.angB = rot + Math.floor(Math.random()*40)+30; 
+            visuals.angD = visuals.angB + 360 - 2 * a; 
+            visuals.angC = (visuals.angB + visuals.angD) / 2;
+
             if (isOpposite) {
                 subType = 'OPPOSITE';
-                let a = Math.floor(Math.random()*60)+60; 
                 ans = 180 - a; values = [a];
                 expr = `圖中，<i>ABCD</i> 是一個圓內接四邊形。<br>已知 ∠<i>DAB</i> = ${a}°，請問對角 θ 是多少度？`;
                 steps = [
@@ -512,21 +547,20 @@
                 ];
             } else {
                 let findExt = Math.random() > 0.5;
-                let ang = Math.floor(Math.random()*60)+60;
-                ans = ang; values = [ang];
+                ans = a; values = [a];
                 if(findExt) {
                     subType = 'FIND_EXT';
-                    expr = `圖中，<i>ABCD</i> 是一個圓內接四邊形，<i>DCE</i> 為直線。<br>已知內對角 ∠<i>DAB</i> = ${ang}°，請問外角 θ 是多少度？`;
+                    expr = `圖中，<i>ABCD</i> 是一個圓內接四邊形，<i>DCE</i> 為直線。<br>已知內對角 ∠<i>DAB</i> = ${a}°，請問外角 θ 是多少度？`;
                 } else {
                     subType = 'FIND_INT';
-                    expr = `圖中，<i>ABCD</i> 是一個圓內接四邊形，<i>DCE</i> 為直線。<br>已知外角 ∠<i>BCE</i> = ${ang}°，請問內對角 θ 是多少度？`;
+                    expr = `圖中，<i>ABCD</i> 是一個圓內接四邊形，<i>DCE</i> 為直線。<br>已知外角 ∠<i>BCE</i> = ${a}°，請問內對角 θ 是多少度？`;
                 }
                 steps = [
                     { prompt: "圓內接四邊形的外角與其「內對角」的大小關係是？(請輸入: 相等/不相等)", expected: "相等", tip: "圓內接四邊形外角" },
                     { prompt: "因此 θ 等於多少度？", expected: String(ans), tip: `直接寫出答案` }
                 ];
             }
-            return JSON.stringify({ typeNum, subType, values, title: "圓內接四邊形", expr, ans, steps });
+            return JSON.stringify({ typeNum, subType, values, title: "圓內接四邊形", expr, ans, steps, visuals });
         }
     }
     // ========================
